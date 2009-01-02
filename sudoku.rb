@@ -52,7 +52,7 @@ class Group
   end
 end
 
-class Grid
+class Board
   include Enumerable
 
   def initialize(verbose=nil)
@@ -95,7 +95,7 @@ class Grid
   end
 
   def inspect
-    "<Grid #{encoding}>"
+    "<Board #{encoding}>"
   end
 
   def encoding
@@ -196,12 +196,12 @@ end
 
 if __FILE__ == $0 then
   def solve(string)
-      grid = Grid.new(true).parse(string)
-      puts grid
+      board = Board.new(true).parse(string)
+      puts board
       
-      grid.solve
+      board.solve
       puts
-      puts grid
+      puts board
       puts
   end
 

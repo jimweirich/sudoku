@@ -98,7 +98,7 @@ class GroupTest < Test::Unit::TestCase
   end
 end
 
-class GridTest < Test::Unit::TestCase
+class BoardTest < Test::Unit::TestCase
   Wiki =
     "53  7    " +
     "6  195   " +
@@ -132,19 +132,19 @@ class GridTest < Test::Unit::TestCase
     "8    7 5 " +
     " 436 81  "
   
-  context 'a grid' do
+  context 'a board' do
     setup do
-      @grid = Grid.new
+      @board = Board.new
     end
 
     should 'initially give all 9 numbers for all cells' do
-      @grid.each do |cell|
+      @board.each do |cell|
         assert_equal((1..9).to_a, cell.available_numbers.sort)
       end
     end
 
     should 'parse a string representation of the puzzle' do
-      @grid.parse(Wiki)
+      @board.parse(Wiki)
       assert_equal "5 3 .  . 7 .  . . .  \n" +
         "6 . .  1 9 5  . . .  \n" +
         ". 9 8  . . .  . 6 .  \n\n" +
@@ -154,40 +154,40 @@ class GridTest < Test::Unit::TestCase
         ". 6 .  . . .  2 8 .  \n" +
         ". . .  4 1 9  . . 5  \n" +
         ". . .  . 8 .  . 7 9  \n\n",
-        @grid.to_s
+        @board.to_s
     end
 
     should 'solve the Wikipedia Puzzle' do
-      grid = Grid.new.parse(Wiki)
-      grid.solve
+      board = Board.new.parse(Wiki)
+      board.solve
 
-      assert grid.solved?
+      assert board.solved?
       assert_equal "534678912672195348198342567" +
         "859761423426853791713924856" +
         "961537284287419635345286179",
-        grid.encoding      
+        board.encoding      
     end
 
     should 'solve the Medium Puzzle' do
-      grid = Grid.new.parse(Medium)
-      grid.solve
+      board = Board.new.parse(Medium)
+      board.solve
 
-      assert grid.solved?
+      assert board.solved?
       assert_equal "942187635368594127715236498" +
         "593478216476921853281365749" +
         "829643571137852964654719382",
-        grid.encoding      
+        board.encoding      
     end
 
     should 'solve the Evil Puzzle' do
-      grid = Grid.new.parse(Evil)
-      grid.solve
+      board = Board.new.parse(Evil)
+      board.solve
 
-      assert grid.solved?
+      assert board.solved?
       assert_equal "285376941439125786176849235" +
         "752981364618734529394562817" +
         "567213498821497653943658172",
-        grid.encoding      
+        board.encoding      
     end
 
   end
