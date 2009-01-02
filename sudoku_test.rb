@@ -9,7 +9,7 @@ class CellTest < Test::Unit::TestCase
     g = Group.new
     g << cell
     numbers.each do |n|
-      c = Cell.new(0,0)
+      c = Cell.new
       c.number = n
       g << c
     end
@@ -18,7 +18,7 @@ class CellTest < Test::Unit::TestCase
 
   context 'a cell' do
     setup do
-      @cell = Cell.new(2,5)
+      @cell = Cell.new("C25")
     end
 
     should 'know its name' do
@@ -78,7 +78,7 @@ class GroupTest < Test::Unit::TestCase
 
     context 'with cells' do
       setup do
-        @cells = (1..10).map { |i| Cell.new(0, i) }
+        @cells = (1..10).map { |i| Cell.new("C#{i}") }
         @cells.each do |c| @group << c end
       end
 
@@ -103,36 +103,66 @@ class GroupTest < Test::Unit::TestCase
 end
 
 class GridTest < Test::Unit::TestCase
+  Wiki =
+    "53  7    " +
+    "6  195   " +
+    " 98    6 " +
+    "8   6   3" +
+    "4  8 3  1" +
+    "7   2   6" +
+    " 6    28 " +
+    "   419  5" +
+    "    8  79"
+
+  Medium =
+    " 4   7 3 " +
+    "  85  1  " +
+    " 15 3  9 " +
+    "5   7 21 " +
+    "  6   8  " +
+    " 81 6   9" +
+    " 2  4 57 " +
+    "  7  29  " +
+    " 5 7   8 "
+  
+  Evil =
+    "  53 694 " +
+    " 3 1    6" +
+    "       3 " +
+    "7  9     " +
+    " 1  3  2 " +
+    "     2  7" +
+    " 6       " +
+    "8    7 5 " +
+    " 436 81  "
+  
   context 'a grid' do
     setup do
       @grid = Grid.new
     end
 
-    should 'give all 9 numbers for any cell' do
-      assert_equal((1..9).to_a, @grid[0,0].available_numbers.sort)
-      assert_equal((1..9).to_a, @grid[8,8].available_numbers.sort)
-      assert_equal((1..9).to_a, @grid[2,6].available_numbers.sort)
+    should 'initially give all 9 numbers for all cells' do
+      @grid.each do |cell|
+        assert_equal((1..9).to_a, cell.available_numbers.sort)
+      end
     end
 
-    should 'wire up the groups' do
-      (0..8).each do |i| @grid[0,i].number = i+1 end
-      assert_equal 0, @grid[0,0].available_numbers.size
-      assert_equal 6, @grid[1,0].available_numbers.size
-      assert_equal 8, @grid[3,0].available_numbers.size
+    should 'parse a string representation of the puzzle' do
+      @grid.parse(Wiki)
+      assert_equal "5 3 .  . 7 .  . . .  \n" +
+        "6 . .  1 9 5  . . .  \n" +
+        ". 9 8  . . .  . 6 .  \n\n" +
+        "8 . .  . 6 .  . . 3  \n" +
+        "4 . .  8 . 3  . . 1  \n" +
+        "7 . .  . 2 .  . . 6  \n\n" +
+        ". 6 .  . . .  2 8 .  \n" +
+        ". . .  4 1 9  . . 5  \n" +
+        ". . .  . 8 .  . 7 9  \n\n",
+        @grid.to_s
     end
 
     should 'solve the Wikipedia Puzzle' do
-      puzzle =
-        "53  7    " +
-        "6  195   " +
-        " 98    6 " +
-        "8   6   3" +
-        "4  8 3  1" +
-        "7   2   6" +
-        " 6    28 " +
-        "   419  5" +
-        "    8  79"
-      grid = Grid.new.parse(puzzle)
+      grid = Grid.new.parse(Wiki)
       grid.solve
 
       assert grid.solved?
@@ -143,17 +173,7 @@ class GridTest < Test::Unit::TestCase
     end
 
     should 'solve the Medium Puzzle' do
-      puzzle =
-        " 4   7 3 " +
-        "  85  1  " +
-        " 15 3  9 " +
-        "5   7 21 " +
-        "  6   8  " +
-        " 81 6   9" +
-        " 2  4 57 " +
-        "  7  29  " +
-        " 5 7   8 "
-      grid = Grid.new.parse(puzzle)
+      grid = Grid.new.parse(Medium)
       grid.solve
 
       assert grid.solved?
@@ -164,18 +184,7 @@ class GridTest < Test::Unit::TestCase
     end
 
     should 'solve the Evil Puzzle' do
-      puzzle =
-        "  53 694 " +
-        " 3 1    6" +
-        "       3 " +
-        "7  9     " +
-        " 1  3  2 " +
-        "     2  7" +
-        " 6       " +
-        "8    7 5 " +
-        " 436 81  "
-
-      grid = Grid.new.parse(puzzle)
+      grid = Grid.new.parse(Evil)
       grid.solve
 
       assert grid.solved?

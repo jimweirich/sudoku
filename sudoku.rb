@@ -5,8 +5,8 @@ require 'set'
 class Cell
   attr_reader :number, :groups
 
-  def initialize(r,c)
-    @name = "C#{r}#{c}"
+  def initialize(name="unamed")
+    @name = name
     @groups = []
   end
 
@@ -48,7 +48,7 @@ class Group
   end
 
   def numbers
-    @cells.inject(Set.new) { |res, c| c.number ? (res << c.number) : res }
+    Set[*@cells.map { |c| c.number }.compact]
   end
 end
 
@@ -58,7 +58,7 @@ class Grid
   def initialize(verbose=nil)
     @verbose = verbose
     @cells = (0...81).map { |i|
-      Cell.new(i/8, i%8)
+      Cell.new("C#{i/9}#{i%9}")
     }
     define_groups
   end
@@ -101,10 +101,6 @@ class Grid
     map { |cell|
       cell.number ? cell.number.to_s : "."
     }.join("")
-  end
-
-  def [](row,col)
-    @cells[9*row + col]
   end
 
   def solve
@@ -192,7 +188,7 @@ class Grid
     g = Group.new
     row_range.each do |r|
       col_range.each do |c|
-        g << self[r,c]
+        g << @cells[r*9 + c]
       end
     end
   end
