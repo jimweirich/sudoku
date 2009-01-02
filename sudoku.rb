@@ -69,6 +69,14 @@ class Grid
       end
     end
   end
+
+  def solved?
+    all? { |cell, r, c| cell.number }
+  end
+
+  def stuck?
+    any? { |cell, r, c| cell.number.nil? && cell.available_numbers.size == 0 }
+  end
   
   def solve
     while solve_one_square
@@ -88,13 +96,21 @@ class Grid
   end
   
   def to_s
-    map { |cell, r, c|
-      cell.number ? cell.number.to_s : "."
-    }.join("").
+    number_string.
       gsub(/.../, "\\0 ").
       gsub(/.{12}/, "\\0\n").
       gsub(/.{39}/m, "\\0\n").
       gsub(/[\d.]/, "\\0 ")
+  end
+
+  def inspect
+    "<Grid #{number_string}>"
+  end
+
+  def number_string
+    map { |cell, r, c|
+      cell.number ? cell.number.to_s : "."
+    }.join("")
   end
 
   def [](row,col)
@@ -175,7 +191,6 @@ Evil =
  6       
 8    7 5 
  436 81  "
-
 
 if __FILE__ == $0 then
   raw = Wiki
