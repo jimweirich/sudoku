@@ -3,7 +3,7 @@
 require 'set'
 
 class Cell
-  attr_reader :number, :groups
+  attr_reader :number
 
   def initialize(name="unamed")
     @name = name

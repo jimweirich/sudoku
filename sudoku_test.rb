@@ -48,10 +48,6 @@ class CellTest < Test::Unit::TestCase
         @group = create_group_with(@cell, 3, 4, 5)
       end
 
-      should 'be know about its group' do
-        @cell.groups.include?(@group)
-      end
-
       should 'report available numbers not in the group' do
         assert_equal Set[1, 2, 6, 7, 8, 9], @cell.available_numbers
       end
