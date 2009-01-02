@@ -35,6 +35,11 @@ class CellTest < Test::Unit::TestCase
       assert_equal 4, @cell.number
     end
 
+    should 'accept a zero as no number' do
+      @cell.number = 0
+      assert_nil @cell.number
+    end
+
     should 'report all possible numbers available' do
       assert_equal( Set[*(1..9)], @cell.available_numbers )
     end

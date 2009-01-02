@@ -3,11 +3,14 @@
 require 'set'
 
 class Cell
-  attr_accessor :number
-  attr_reader :groups
+  attr_reader :number, :groups
 
   def initialize
     @groups = []
+  end
+
+  def number=(value)
+    @number = value.nonzero?
   end
 
   def available_numbers
@@ -53,14 +56,9 @@ class Grid
   end
 
   def parse(string)
-    string.map { |l|
-      l.chomp.split(//).map { |s|
-        s.to_i.nonzero?
-      }
-    }.each_with_index do |row, r|
-      row.each_with_index do |n, c|
-        self[r,c].number = n
-      end
+    numbers = string.gsub(/\n/, '').split(//).map { |n| n.to_i }
+    each do |cell, r, c|
+      cell.number = numbers.shift
     end
   end
 
@@ -143,7 +141,7 @@ class Grid
 end
 
 # http://en.wikipedia.org/wiki/Sudoku
-wiki =
+Wiki =
 "53  7    
 6  195   
  98    6 
@@ -155,7 +153,7 @@ wiki =
     8  79"
 
 # http://www.websudoku.com/?level=2&set_id=3350218628
-medium = 
+Medium = 
 " 4   7 3 
   85  1  
  15 3  9 
@@ -167,7 +165,7 @@ medium =
  5 7   8 "
 
 # http://www.websudoku.com/?level=4&set_id=470872047
-evil = 
+Evil = 
 "  53 694 
  3 1    6
        3 
@@ -180,7 +178,7 @@ evil =
 
 
 if __FILE__ == $0 then
-  raw = wiki
+  raw = Wiki
   
   G = Grid.new
   G.parse(raw)
