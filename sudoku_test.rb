@@ -10,7 +10,7 @@ class CellTest < Test::Unit::TestCase
     g = Group.new
     g << cell
     numbers.each do |n|
-      c = Cell.new
+      c = Cell.new(0,0)
       c.number = n
       g << c
     end
@@ -19,11 +19,16 @@ class CellTest < Test::Unit::TestCase
 
   context 'a cell' do
     setup do
-      @cell = Cell.new
+      @cell = Cell.new(2,5)
     end
 
-    should 'exist' do
-      assert_not_nil @cell
+    should 'knows its location' do
+      assert_equal 2, @cell.row
+      assert_equal 5, @cell.col
+    end
+
+    should 'know its name' do
+      assert_equal "C25", @cell.to_s
     end
 
     should 'initially have no number' do
@@ -79,7 +84,7 @@ class GroupTest < Test::Unit::TestCase
 
     context 'with cells' do
       setup do
-        @cells = (1..10).map { Cell.new }
+        @cells = (1..10).map { |i| Cell.new(0, i) }
         @cells.each do |c| @group << c end
       end
 
@@ -122,5 +127,64 @@ class GridTest < Test::Unit::TestCase
       assert_equal 6, @grid[1,0].available_numbers.size
       assert_equal 8, @grid[3,0].available_numbers.size
     end
+
+    should 'solve the Wikipedia Puzzle' do
+      puzzle =
+        "53  7    " +
+        "6  195   " +
+        " 98    6 " +
+        "8   6   3" +
+        "4  8 3  1" +
+        "7   2   6" +
+        " 6    28 " +
+        "   419  5" +
+        "    8  79"
+      grid = Grid.new.parse(puzzle)
+      grid.solve
+      assert_equal "534678912672195348198342567" +
+        "859761423426853791713924856" +
+        "961537284287419635345286179",
+        grid.number_string      
+    end
+
+    should 'solve the Medium Puzzle' do
+      puzzle =
+        " 4   7 3 " +
+        "  85  1  " +
+        " 15 3  9 " +
+        "5   7 21 " +
+        "  6   8  " +
+        " 81 6   9" +
+        " 2  4 57 " +
+        "  7  29  " +
+        " 5 7   8 "
+      grid = Grid.new.parse(puzzle)
+      grid.solve
+      assert_equal "942187635368594127715236498" +
+        "593478216476921853281365749" +
+        "829643571137852964654719382",
+        grid.number_string      
+    end
+
+    should 'solve the Evil Puzzle' do
+      puzzle =
+        "  53 694 " +
+        " 3 1    6" +
+        "       3 " +
+        "7  9     " +
+        " 1  3  2 " +
+        "     2  7" +
+        " 6       " +
+        "8    7 5 " +
+        " 436 81  "
+
+      grid = Grid.new.parse(puzzle)
+      grid.solve
+      assert_equal "285376941439125786176849235" +
+        "752981364618734529394562817" +
+        "567213498821497653943658172",
+        grid.number_string      
+    end
+
   end
 end

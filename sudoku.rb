@@ -3,9 +3,11 @@
 require 'set'
 
 class Cell
-  attr_reader :number, :groups
+  attr_reader :number, :groups, :row, :col
 
-  def initialize
+  def initialize(r,c)
+    @row = r
+    @col = c
     @groups = []
   end
 
@@ -25,6 +27,14 @@ class Cell
   def join(group)
     @groups << group
   end
+
+  def to_s
+    "C#{@row}#{@col}"
+  end
+
+  def inspect
+    to_s
+  end
 end
 
 # A group of cells.
@@ -36,20 +46,30 @@ class Group
   def <<(cell)
     cell.join(self)
     @cells << cell
+    self
   end
 
   def numbers
     @cells.inject(Set.new) { |res, c| c.number ? (res << c.number) : res }
+  end
+
+  def to_s
+    "G"
+  end
+
+  def inspect
+    to_s
   end
 end
 
 class Grid
   include Enumerable
 
-  def initialize
-    @cells = (1..9).map { |c|
-      (1..9).map { |r|
-        Cell.new
+  def initialize(verbose=nil)
+    @verbose = verbose
+    @cells = (0..8).map { |c|
+      (0..8).map { |r|
+        Cell.new(r,c)
       }
     }
     define_groups
@@ -60,34 +80,61 @@ class Grid
     each do |cell, r, c|
       cell.number = numbers.shift
     end
+    self
   end
 
   def each
-    @cells.each_with_index do |row, r|
-      row.each_with_index do |cell, c|
-        yield cell, r, c
+    @cells.each do |row|
+      row.each do |cell|
+        yield cell
       end
     end
   end
 
   def solved?
-    all? { |cell, r, c| cell.number }
+    all? { |cell| cell.number }
   end
 
   def stuck?
-    any? { |cell, r, c| cell.number.nil? && cell.available_numbers.size == 0 }
+    any? { |cell| cell.number.nil? && cell.available_numbers.size == 0 }
   end
   
   def solve
-    while solve_one_square
+    retries = []
+    while true
+      while solve_one_square
+      end
+      return if solved?
+      if stuck?
+        fail "No Solution Found" if retries.empty?
+        puts "Backtracking" if @verbose
+        guess(retries)
+      else
+        cell = to_a.reject { |cell|
+          cell.number
+        }.sort_by { |cell| 
+          cell.available_numbers.size
+        }.first
+        cell.available_numbers.each do |n|
+          retries.push([number_string, cell, n])
+        end
+        guess(retries)
+      end
     end
   end
 
+  def guess(retries)
+    state, cell, number = retries.pop
+    parse(state)
+    puts "Guessing #{number} at #{cell}" if @verbose
+    cell.number = number        
+  end
+
   def solve_one_square
-    each do |cell, r, c|
+    each do |cell|
       an = cell.available_numbers
       if an.size == 1
-        puts "Put #{an.to_a.first} at (#{r},#{c})"
+        puts "Put #{an.to_a.first} at (#{cell})" if @verbose
         cell.number = an.to_a.first
         return true
       end
@@ -108,7 +155,7 @@ class Grid
   end
 
   def number_string
-    map { |cell, r, c|
+    map { |cell|
       cell.number ? cell.number.to_s : "."
     }.join("")
   end
@@ -158,46 +205,62 @@ end
 
 # http://en.wikipedia.org/wiki/Sudoku
 Wiki =
-"53  7    
-6  195   
- 98    6 
-8   6   3
-4  8 3  1
-7   2   6
- 6    28 
-   419  5
-    8  79"
+  "53  7    " +
+  "6  195   " +
+  " 98    6 " +
+  "8   6   3" +
+  "4  8 3  1" +
+  "7   2   6" +
+  " 6    28 " +
+  "   419  5" +
+  "    8  79"
 
 # http://www.websudoku.com/?level=2&set_id=3350218628
 Medium = 
-" 4   7 3 
-  85  1  
- 15 3  9 
-5   7 21 
-  6   8  
- 81 6   9
- 2  4 57 
-  7  29  
- 5 7   8 "
+  " 4   7 3 " +
+  "  85  1  " +
+  " 15 3  9 " +
+  "5   7 21 " +
+  "  6   8  " +
+  " 81 6   9" +
+  " 2  4 57 " +
+  "  7  29  " +
+  " 5 7   8 "
 
 # http://www.websudoku.com/?level=4&set_id=470872047
 Evil = 
-"  53 694 
- 3 1    6
-       3 
-7  9     
- 1  3  2 
-     2  7
- 6       
-8    7 5 
- 436 81  "
+  "  53 694 " +
+  " 3 1    6" +
+  "       3 " +
+  "7  9     " +
+  " 1  3  2 " +
+  "     2  7" +
+  " 6       " +
+  "8    7 5 " +
+  " 436 81  "
 
 if __FILE__ == $0 then
-  raw = Wiki
-  
-  G = Grid.new
-  G.parse(raw)
-  puts G
-  G.solve
-  puts G
+  def solve(string)
+      puts "Solving ----------------------------------------------------"
+      grid = Grid.new(true)
+      grid.parse(string)
+      puts grid
+      
+      grid.solve
+      puts
+      puts grid
+      puts
+  end
+
+  if ARGV.empty?
+    [Wiki, Medium, Evil].each do |s|
+      solve(s)
+    end
+  else
+    ARGV.each do |fn|
+      open(fn) do |f|
+        solve(f.read)
+      end
+    end
+  end
 end
