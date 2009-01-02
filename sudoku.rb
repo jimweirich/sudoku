@@ -64,7 +64,8 @@ class Grid
   end
 
   def parse(string)
-    numbers = string.gsub(/\n/, '').split(//).map { |n| n.to_i }
+    numbers = string.gsub(/^#.*$/, '').gsub(/\n/, '').
+      split(//).map { |n| n.to_i }
     each do |cell|
       cell.number = numbers.shift
     end
@@ -98,9 +99,7 @@ class Grid
   end
 
   def encoding
-    map { |cell|
-      cell.number ? cell.number.to_s : "."
-    }.join("")
+    map { |cell| cell.number || "." }.join
   end
 
   def solve
@@ -195,45 +194,8 @@ class Grid
   
 end
 
-# http://en.wikipedia.org/wiki/Sudoku
-Wiki =
-  "53  7    " +
-  "6  195   " +
-  " 98    6 " +
-  "8   6   3" +
-  "4  8 3  1" +
-  "7   2   6" +
-  " 6    28 " +
-  "   419  5" +
-  "    8  79"
-
-# http://www.websudoku.com/?level=2&set_id=3350218628
-Medium = 
-  " 4   7 3 " +
-  "  85  1  " +
-  " 15 3  9 " +
-  "5   7 21 " +
-  "  6   8  " +
-  " 81 6   9" +
-  " 2  4 57 " +
-  "  7  29  " +
-  " 5 7   8 "
-
-# http://www.websudoku.com/?level=4&set_id=470872047
-Evil = 
-  "  53 694 " +
-  " 3 1    6" +
-  "       3 " +
-  "7  9     " +
-  " 1  3  2 " +
-  "     2  7" +
-  " 6       " +
-  "8    7 5 " +
-  " 436 81  "
-
 if __FILE__ == $0 then
   def solve(string)
-      puts "Solving ----------------------------------------------------"
       grid = Grid.new(true).parse(string)
       puts grid
       
@@ -244,14 +206,14 @@ if __FILE__ == $0 then
   end
 
   if ARGV.empty?
-    [Wiki, Medium, Evil].each do |s|
-      solve(s)
-    end
-  else
-    ARGV.each do |fn|
-      open(fn) do |f|
-        solve(f.read)
-      end
+    puts "Usage: ruby sudoku.rb sud-files..."
+    exit 
+  end
+
+  ARGV.each do |fn|
+    puts "Solving #{fn} ----------------------------------------------"
+    open(fn) do |f|
+      solve(f.read)
     end
   end
 end
