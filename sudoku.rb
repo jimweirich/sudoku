@@ -108,8 +108,7 @@ class Board
   def solve
     alternatives = []
     while true
-      while solve_one_square
-      end
+      solve_easy_squares
       break if solved?
       if stuck?
         fail "No Solution Found" if alternatives.empty?
@@ -125,7 +124,12 @@ class Board
 
   private
 
-  def solve_one_square
+  def solve_easy_squares
+    while solve_one_easy_square
+    end
+  end
+  
+  def solve_one_easy_square
     each do |cell|
       an = cell.available_numbers
       if an.size == 1
