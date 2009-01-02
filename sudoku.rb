@@ -86,7 +86,7 @@ class Grid
   end
   
   def to_s
-    number_string.
+    encoding.
       gsub(/.../, "\\0 ").
       gsub(/.{12}/, "\\0\n").
       gsub(/.{39}/m, "\\0\n").
@@ -94,10 +94,10 @@ class Grid
   end
 
   def inspect
-    "<Grid #{number_string}>"
+    "<Grid #{encoding}>"
   end
 
-  def number_string
+  def encoding
     map { |cell|
       cell.number ? cell.number.to_s : "."
     }.join("")
@@ -147,7 +147,7 @@ class Grid
 
   def remember_alternatives(cell, alternatives)
     cell.available_numbers.each do |n|
-      alternatives.push([number_string, cell, n])
+      alternatives.push([encoding, cell, n])
     end
   end
   

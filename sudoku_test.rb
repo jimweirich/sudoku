@@ -169,7 +169,7 @@ class GridTest < Test::Unit::TestCase
       assert_equal "534678912672195348198342567" +
         "859761423426853791713924856" +
         "961537284287419635345286179",
-        grid.number_string      
+        grid.encoding      
     end
 
     should 'solve the Medium Puzzle' do
@@ -180,7 +180,7 @@ class GridTest < Test::Unit::TestCase
       assert_equal "942187635368594127715236498" +
         "593478216476921853281365749" +
         "829643571137852964654719382",
-        grid.number_string      
+        grid.encoding      
     end
 
     should 'solve the Evil Puzzle' do
@@ -191,7 +191,7 @@ class GridTest < Test::Unit::TestCase
       assert_equal "285376941439125786176849235" +
         "752981364618734529394562817" +
         "567213498821497653943658172",
-        grid.number_string      
+        grid.encoding      
     end
 
   end
