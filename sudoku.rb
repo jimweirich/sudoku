@@ -5,6 +5,8 @@ require 'set'
 class Cell
   attr_reader :number
 
+  OneThruNine = Set[*1..9]
+
   def initialize(name="unamed")
     @name = name
     @groups = []
@@ -15,12 +17,13 @@ class Cell
   end
 
   def available_numbers
-    return Set[] if number
-    result = Set[*(1..9)]
-    @groups.each do |g|    
-      result -= g.numbers
+    if number
+      Set[]
+    else
+      @groups.inject(OneThruNine) { |res, group|
+        res - group.numbers
+      }
     end
-    result
   end
 
   def join(group)
