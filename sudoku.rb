@@ -99,49 +99,6 @@ class Grid
     any? { |cell| cell.number.nil? && cell.available_numbers.size == 0 }
   end
   
-  def solve
-    retries = []
-    while true
-      while solve_one_square
-      end
-      return if solved?
-      if stuck?
-        fail "No Solution Found" if retries.empty?
-        puts "Backtracking (#{retries.size})" if @verbose
-        guess(retries)
-      else
-        cell = to_a.reject { |cell|
-          cell.number
-        }.sort_by { |cell| 
-          cell.available_numbers.size
-        }.first
-        cell.available_numbers.each do |n|
-          retries.push([number_string, cell, n])
-        end
-        guess(retries)
-      end
-    end
-  end
-
-  def guess(retries)
-    state, cell, number = retries.pop
-    parse(state)
-    puts "Guessing #{number} at #{cell}" if @verbose
-    cell.number = number        
-  end
-
-  def solve_one_square
-    each do |cell|
-      an = cell.available_numbers
-      if an.size == 1
-        puts "Put #{an.to_a.first} at (#{cell})" if @verbose
-        cell.number = an.to_a.first
-        return true
-      end
-    end
-    return false
-  end
-  
   def to_s
     number_string.
       gsub(/.../, "\\0 ").
@@ -164,7 +121,60 @@ class Grid
     @cells[row][col]
   end
 
+  def solve
+    alternatives = []
+    while true
+      while solve_one_square
+      end
+      return if solved?
+      if stuck?
+        fail "No Solution Found" if alternatives.empty?
+        puts "Backtracking (#{alternatives.size})" if @verbose
+        guess(alternatives)
+      else
+        cell = find_candidate_for_guessing
+        remember_alternatives(cell, alternatives)
+        guess(alternatives)
+      end
+    end
+  end
+
   private
+
+  def solve_one_square
+    each do |cell|
+      an = cell.available_numbers
+      if an.size == 1
+        puts "Put #{an.to_a.first} at (#{cell})" if @verbose
+        cell.number = an.to_a.first
+        return true
+      end
+    end
+    return false
+  end
+  
+  def find_candidate_for_guessing
+    cells_without_numbers.sort_by { |cell| 
+      [cell.available_numbers.size, to_s]
+    }.first
+  end
+
+  def cells_without_numbers
+    to_a.reject { |cell| cell.number }
+  end
+
+  def remember_alternatives(cell, alternatives)
+    cell.available_numbers.each do |n|
+      alternatives.push([number_string, cell, n])
+    end
+  end
+  
+  def guess(alternatives)
+    state, cell, number = alternatives.pop
+    parse(state)
+    puts "Guessing #{number} at #{cell}" if @verbose
+    cell.number = number        
+  end
 
   def define_groups
     define_columns

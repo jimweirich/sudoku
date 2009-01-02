@@ -45,7 +45,7 @@ class CellTest < Test::Unit::TestCase
       assert_nil @cell.number
     end
 
-    should 'report all possible numbers available' do
+    should 'report all numbers are available' do
       assert_equal( Set[*(1..9)], @cell.available_numbers )
     end
 
@@ -108,7 +108,6 @@ class GroupTest < Test::Unit::TestCase
   end
 end
 
-
 class GridTest < Test::Unit::TestCase
   context 'a grid' do
     setup do
@@ -141,6 +140,8 @@ class GridTest < Test::Unit::TestCase
         "    8  79"
       grid = Grid.new.parse(puzzle)
       grid.solve
+
+      assert grid.solved?
       assert_equal "534678912672195348198342567" +
         "859761423426853791713924856" +
         "961537284287419635345286179",
@@ -160,6 +161,8 @@ class GridTest < Test::Unit::TestCase
         " 5 7   8 "
       grid = Grid.new.parse(puzzle)
       grid.solve
+
+      assert grid.solved?
       assert_equal "942187635368594127715236498" +
         "593478216476921853281365749" +
         "829643571137852964654719382",
@@ -180,6 +183,8 @@ class GridTest < Test::Unit::TestCase
 
       grid = Grid.new.parse(puzzle)
       grid.solve
+
+      assert grid.solved?
       assert_equal "285376941439125786176849235" +
         "752981364618734529394562817" +
         "567213498821497653943658172",
