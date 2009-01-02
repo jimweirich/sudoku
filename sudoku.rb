@@ -107,7 +107,7 @@ class Grid
       return if solved?
       if stuck?
         fail "No Solution Found" if retries.empty?
-        puts "Backtracking" if @verbose
+        puts "Backtracking (#{retries.size})" if @verbose
         guess(retries)
       else
         cell = to_a.reject { |cell|
