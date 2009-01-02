@@ -58,7 +58,7 @@ class Grid
   def initialize(verbose=nil)
     @verbose = verbose
     @cells = (0...81).map { |i|
-      Cell.new("C#{i/9}#{i%9}")
+      Cell.new("C#{(i/9)+1}#{(i%9)+1}")
     }
     define_groups
   end
