@@ -107,7 +107,7 @@ class Grid
     while true
       while solve_one_square
       end
-      return if solved?
+      break if solved?
       if stuck?
         fail "No Solution Found" if alternatives.empty?
         puts "Backtracking (#{alternatives.size})" if @verbose
