@@ -3,11 +3,10 @@
 require 'set'
 
 class Cell
-  attr_reader :number, :groups, :row, :col
+  attr_reader :number, :groups
 
   def initialize(r,c)
-    @row = r
-    @col = c
+    @name = "C#{r}#{c}"
     @groups = []
   end
 
@@ -29,7 +28,7 @@ class Cell
   end
 
   def to_s
-    "C#{@row}#{@col}"
+    @name
   end
 
   def inspect
@@ -37,7 +36,6 @@ class Cell
   end
 end
 
-# A group of cells.
 class Group
   def initialize
     @cells = []
@@ -52,14 +50,6 @@ class Group
   def numbers
     @cells.inject(Set.new) { |res, c| c.number ? (res << c.number) : res }
   end
-
-  def to_s
-    "G"
-  end
-
-  def inspect
-    to_s
-  end
 end
 
 class Grid
@@ -67,27 +57,23 @@ class Grid
 
   def initialize(verbose=nil)
     @verbose = verbose
-    @cells = (0..8).map { |c|
-      (0..8).map { |r|
-        Cell.new(r,c)
-      }
+    @cells = (0...81).map { |i|
+      Cell.new(i/8, i%8)
     }
     define_groups
   end
 
   def parse(string)
     numbers = string.gsub(/\n/, '').split(//).map { |n| n.to_i }
-    each do |cell, r, c|
+    each do |cell|
       cell.number = numbers.shift
     end
     self
   end
 
   def each
-    @cells.each do |row|
-      row.each do |cell|
-        yield cell
-      end
+    @cells.each do |cell|
+      yield cell
     end
   end
 
@@ -118,7 +104,7 @@ class Grid
   end
 
   def [](row,col)
-    @cells[row][col]
+    @cells[9*row + col]
   end
 
   def solve
@@ -252,8 +238,7 @@ Evil =
 if __FILE__ == $0 then
   def solve(string)
       puts "Solving ----------------------------------------------------"
-      grid = Grid.new(true)
-      grid.parse(string)
+      grid = Grid.new(true).parse(string)
       puts grid
       
       grid.solve

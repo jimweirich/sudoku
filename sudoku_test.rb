@@ -4,7 +4,6 @@ require 'shoulda'
 
 require 'sudoku'
 
-
 class CellTest < Test::Unit::TestCase
   def create_group_with(cell, *numbers)
     g = Group.new
@@ -20,11 +19,6 @@ class CellTest < Test::Unit::TestCase
   context 'a cell' do
     setup do
       @cell = Cell.new(2,5)
-    end
-
-    should 'knows its location' do
-      assert_equal 2, @cell.row
-      assert_equal 5, @cell.col
     end
 
     should 'know its name' do
