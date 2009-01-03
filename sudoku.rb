@@ -282,7 +282,7 @@ class Board
       "abcdefghi")
   end
 
-  # Define column groups.
+  # Define block groups.
   def define_blocks
     define_groupings(
       "aaabbbccc" +
@@ -305,32 +305,38 @@ class Board
     groups = Hash.new { |h, k| h[k] = Group.new }
     group_ids = string.split(//)
     each do |cell|
-      group_id = group_ids.shift
-      groups[group_id] << cell
+      groups[group_ids.shift] << cell
     end
   end
 end
 
-if __FILE__ == $0 then
+class SudokuSolver
   def solve(string)
       board = Board.new(true).parse(string)
       puts board
-      
       board.solve
       puts
       puts board
       puts
   end
 
-  if ARGV.empty?
-    puts "Usage: ruby sudoku.rb sud-files..."
-    exit 
-  end
-
-  ARGV.each do |fn|
-    puts "Solving #{fn} ----------------------------------------------"
-    open(fn) do |f|
-      solve(f.read)
+  def run(args)
+    if args.empty?
+      puts "Usage: ruby sudoku.rb sud-files..."
+      exit 
+    end
+    
+    args.each do |fn|
+      puts "Solving #{fn} ----------------------------------------------"
+      puts
+      open(fn) do |f|
+        solve(f.read)
+      end
     end
   end
 end
+
+if __FILE__ == $0 then
+  SudokuSolver.new.run(ARGV)
+end
+
