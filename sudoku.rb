@@ -257,14 +257,14 @@ class Board
   # Define row groups.
   def define_rows
     9.times do |r|
-      define_group_x(cell_list(r * 9, 1))
+      define_group(cell_list(r * 9, 1))
     end
   end
 
   # Define column groups.
   def define_columns
     9.times do |c|
-      define_group_x(cell_list(c, 9))
+      define_group(cell_list(c, 9))
     end
   end
 
@@ -279,7 +279,7 @@ class Board
 
   # Define a single 3x3 group starting at :index.
   def define_block(index)
-    define_group_x(
+    define_group(
       cell_list(index, 1, 3) +
       cell_list(index+9, 1, 3) +
       cell_list(index+18, 1, 3))
@@ -287,7 +287,7 @@ class Board
 
   # Define a group of cells specified by a list of indicies for the
   # cells.
-  def define_group_x(indicies)
+  def define_group(indicies)
     g = Group.new
     indicies.each do |i| g << @cells[i] end
   end
