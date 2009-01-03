@@ -305,7 +305,9 @@ class Board
     groups = Hash.new { |h, k| h[k] = Group.new }
     group_ids = string.split(//)
     each do |cell|
-      groups[group_ids.shift] << cell
+      group_id = group_ids.shift
+      next unless group_id =~ /^[a-zA-Z]$/
+      groups[group_id] << cell
     end
   end
 end
