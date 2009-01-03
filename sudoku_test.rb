@@ -168,6 +168,17 @@ class BoardTest < Test::Unit::TestCase
         board.encoding      
     end
 
+    should 'solve the Wikipedia Puzzle with DOS line endings' do
+      board = Board.new.parse(open("wiki_dos.sud") { |f| f.read })
+      board.solve
+
+      assert board.solved?
+      assert_equal "534678912672195348198342567" +
+        "859761423426853791713924856" +
+        "961537284287419635345286179",
+        board.encoding      
+    end
+
     should 'solve the Medium Puzzle' do
       board = Board.new.parse(Medium)
       board.solve

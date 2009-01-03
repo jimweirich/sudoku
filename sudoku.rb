@@ -67,7 +67,7 @@ class Board
   end
 
   def parse(string)
-    numbers = string.gsub(/^#.*$/, '').gsub(/\n/, '').
+    numbers = string.gsub(/^#.*$/, '').gsub(/[\r\n\t]/, '').
       split(//).map { |n| n.to_i }
     each do |cell|
       cell.number = numbers.shift
