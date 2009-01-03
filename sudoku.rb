@@ -140,10 +140,25 @@ class Board
     map { |cell| cell.number || "." }.join
   end
 
+  # Solve the puzzle represente by the board.  The solution algorithm
+  # is roughly:
+  #
+  # * Put numbers is all the cells where there is only one
+  #   possible number that could be there (the _easy_ squares).
+  # * If all cells have been assigned, then we are done!
+  # * If all unassigned cells have no possibilities, then we
+  #   are stuck.  Backtrack by restoring the state of the board
+  #   to the last guess and make a different guess.  If there
+  #   are no more alternatives, 
+  # * Otherwise, just pick one of the cells with the fewest
+  #   possible numbers (to minimize backtracking) and just guess
+  #   at one of the numbers.  Remember the other choices in
+  #   case we need to backtrack.
+  #
   def solve
     alternatives = []
     while true
-      solve_easy_squares
+      solve_easy_cells
       break if solved?
       if stuck?
         fail "No Solution Found" if alternatives.empty?
@@ -159,12 +174,16 @@ class Board
 
   private
 
-  def solve_easy_squares
-    while solve_one_easy_square
+  # Work toward a solution by assigning numbers to all the cells that
+  # have only one possibility.
+  def solve_easy_cells
+    while solve_one_easy_cell
     end
   end
   
-  def solve_one_easy_square
+  # Find a cell with only one possibility and fill it.  Return true if
+  # you are able to fill a square, otherwise return false.
+  def solve_one_easy_cell
     each do |cell|
       an = cell.available_numbers
       if an.size == 1
@@ -176,22 +195,33 @@ class Board
     return false
   end
   
+  # Find a candidate cell for guessing.  The candidate must be an
+  # unassigned cell.  Prefer cells with the fewest number of available
+  # numbers (just to minimize backtracking).
   def find_candidate_for_guessing
-    cells_without_numbers.sort_by { |cell| 
+    unassigned_cells.sort_by { |cell| 
       [cell.available_numbers.size, to_s]
     }.first
   end
 
-  def cells_without_numbers
+  # Return a list of unassigned cells on the board.
+  def unassigned_cells
     to_a.reject { |cell| cell.number }
   end
 
+  # Remember the all the alternative choices for the given cell on the
+  # list of alternatives.  An alternative is stored as a 3-tuple
+  # consisting of the current encoded state of the board, the cell and
+  # an available number.
   def remember_alternatives(cell, alternatives)
     cell.available_numbers.each do |n|
       alternatives.push([encoding, cell, n])
     end
   end
   
+  # Make a guess by pulling an alternative from the list of remembered
+  # alternatives and.  The state of the board at the remembered
+  # alternative is restored and the choice is made for that cell.
   def guess(alternatives)
     state, cell, number = alternatives.pop
     parse(state)
@@ -199,24 +229,30 @@ class Board
     cell.number = number        
   end
 
+  # Define the groups of cells for this puzzle.  Override this method
+  # if you wish to create board that support non-standard cell
+  # groupings (such as http://www.websudoku.com/variation/?day=2)
   def define_groups
     define_columns
     define_rows
     define_blocks
   end
 
+  # Define row groups.
   def define_rows
     (0..8).each do |r|
       define_group(r..r, 0..8)
     end
   end
 
+  # Define column groups.
   def define_columns
     (0..8).each do |c|
       define_group(0..8, c..c)
     end
   end
 
+  # Define the 3x3 groups.
   def define_blocks
     [(0..2), (3..5), (6..8)].each do |rrange|
       [(0..2), (3..5), (6..8)].each do |crange|
@@ -225,6 +261,8 @@ class Board
     end
   end
 
+  # Define a group of cells specified by the row range and colum
+  # range.
   def define_group(row_range, col_range)
     g = Group.new
     row_range.each do |r|
