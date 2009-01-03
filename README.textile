@@ -1,0 +1,46 @@
+h1. Yet Another Sudoku Solver
+
+h2. The Blame
+
+Blame for this code base goes to Dave Hoover (@redsquirrel), who
+started it all by twittering about working on a Sudoku solver
+(http://github.com/redsquirrel/nest/tree/master/sudoku).
+
+h2. The Past
+
+I wrote a very simple Sudoku solver a couple years ago.  My coworkers
+introduced me to the puzzle and spent their lunchtimes solving them.
+I solved one or two by hand and realized that I would enjoy writing a
+program to solve them rather than solving them myself.
+
+That early version of the program could only handle simple sudoku
+puzzles that didn't involve guessing and backtraking.  Unfortunately
+that early version has been lost in the mists if time.  
+
+h2. The Present
+
+This new version of the solver was written from scratch and does
+handle tougher puzzles the require guessing and backtracking.  Except
+for the puzzle parsing code, it doesn't share any implementation with
+Dave's solution.
+
+h2. Usage
+
+Just pass it the name of the puzzle file (.sud) on the command line.
+It will print out the initial and final puzzles, and each step along
+the way to a solution.
+
+Example:
+
+   ruby sudoku.rb puzzles/evil.sud
+
+h2. And It Continues
+
+It seems that Corey Haines (@coreyhaines) has also caught the Sudoku
+solver bug and has posted his solution
+(http://github.com/coreyhaines/sudoku_solver).
+
+h2. License
+
+You are granted permission to read, copy, modify, redistribute this
+software or derivatives of this software.
