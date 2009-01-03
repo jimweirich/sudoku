@@ -158,8 +158,8 @@ class Board
   # Solve the puzzle represente by the board.  The solution algorithm
   # is roughly:
   #
-  # * Put numbers is all the cells where there is only one
-  #   possible number that could be there (the _easy_ squares).
+  # * Put numbers in all the cells where there is only one
+  #   possible choice (the _easy_ squares).
   # * If all cells have been assigned, then we are done!
   # * If all unassigned cells have no possibilities, then we
   #   are stuck.  Backtrack by restoring the state of the board
