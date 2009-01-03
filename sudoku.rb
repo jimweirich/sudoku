@@ -18,15 +18,20 @@ class Cell
 
   OneThruNine = Set[*1..9]
 
+  # Initialize a cell with the name :name.
   def initialize(name="unamed")
     @name = name
     @groups = []
   end
 
+  # Assign a number to the cell.  Assigning nil or 0 leaves the cell
+  # unassigned.
   def number=(value)
     @number = value.nonzero?
   end
 
+  # Return a set of numbers that could be assigned to the cell without
+  # conflicting with any cells in any of the cell's groups.
   def available_numbers
     if number
       Set[]
@@ -37,34 +42,43 @@ class Cell
     end
   end
 
+  # The cell joins the given group.
   def join(group)
     @groups << group
   end
 
+  # Provide a string representation of the cell.
   def to_s
     @name
   end
 
+  # Provided an inspect string for the cell.
   def inspect
     to_s
   end
 end
+
 
 # Cells are organized into groups.  Each group consists of 9 cells
 # where the number assigned to a cell must be unique within the group.
 # Groups are able to report the current set of assigned numbers within
 # the group.
 class Group
+
+  # Initialize a group.
   def initialize
     @cells = []
   end
 
+  # Add a cell to the given group.  Make sure the cell knows that it
+  # has joined the group.
   def <<(cell)
     cell.join(self)
     @cells << cell
     self
   end
 
+  # Return a set of numbers assigned to the cells in this group.
   def numbers
     Set[*@cells.map { |c| c.number }.compact]
   end
@@ -127,6 +141,7 @@ class Board
       gsub(/[\d.]/, "\\0 ")
   end
 
+  # Provide a inspect string for a board.
   def inspect
     "<Board #{encoding}>"
   end
