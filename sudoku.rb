@@ -256,36 +256,50 @@ class Board
 
   # Define row groups.
   def define_rows
-    (0..8).each do |r|
-      define_group(r..r, 0..8)
+    9.times do |r|
+      define_group_x(cell_list(r * 9, 1))
     end
   end
 
   # Define column groups.
   def define_columns
-    (0..8).each do |c|
-      define_group(0..8, c..c)
+    9.times do |c|
+      define_group_x(cell_list(c, 9))
     end
   end
 
   # Define the 3x3 groups.
   def define_blocks
-    [(0..2), (3..5), (6..8)].each do |rrange|
-      [(0..2), (3..5), (6..8)].each do |crange|
-        define_group(rrange, crange)
+    3.times do |c|
+      3.times do |r|
+        define_block(c*3 + r*27)
       end
     end
   end
 
-  # Define a group of cells specified by the row range and colum
-  # range.
-  def define_group(row_range, col_range)
+  # Define a single 3x3 group starting at :index.
+  def define_block(index)
+    define_group_x(
+      cell_list(index, 1, 3) +
+      cell_list(index+9, 1, 3) +
+      cell_list(index+18, 1, 3))
+  end
+
+  # Define a group of cells specified by a list of indicies for the
+  # cells.
+  def define_group_x(indicies)
     g = Group.new
-    row_range.each do |r|
-      col_range.each do |c|
-        g << @cells[r*9 + c]
-      end
+    indicies.each do |i| g << @cells[i] end
+  end
+
+  # Create a list (with the given length) of cell indicies that start
+  # with :index and increment by :increment.
+  def cell_list(index, increment, length=9)
+    result = []
+    length.times do |i|
+      result << index + increment * i
     end
+    result
   end
   
 end
