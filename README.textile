@@ -4,7 +4,7 @@ h2. The Blame
 
 Blame for this code base goes to Dave Hoover (@redsquirrel), who
 started it all by twittering about working on a Sudoku solver
-(http://github.com/redsquirrel/nest/tree/master/sudoku).
+("http://github.com/redsquirrel/nest/tree/master/sudoku":http://github.com/redsquirrel/nest/tree/master/sudoku).
 
 h2. The Past
 
@@ -38,7 +38,7 @@ h2. And It Continues
 
 It seems that Corey Haines (@coreyhaines) has also caught the Sudoku
 solver bug and has posted his solution
-(http://github.com/coreyhaines/sudoku_solver).
+("http://github.com/coreyhaines/sudoku_solver":http://github.com/coreyhaines/sudoku_solver).
 
 h2. License
 
