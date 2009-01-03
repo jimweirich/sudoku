@@ -164,7 +164,8 @@ class Board
   # * If all unassigned cells have no possibilities, then we
   #   are stuck.  Backtrack by restoring the state of the board
   #   to the last guess and make a different guess.  If there
-  #   are no more alternatives, 
+  #   are no more alternatives, then we have failed to solve
+  #   the puzzle.
   # * Otherwise, just pick one of the cells with the fewest
   #   possible numbers (to minimize backtracking) and just guess
   #   at one of the numbers.  Remember the other choices in
