@@ -2,6 +2,17 @@
 
 require 'set'
 
+# A cell respresents a single location on the sudoku board.  Initially
+# it holds no number, but a number can be manually assigned to the
+# cell (which is then remembered for later).
+#
+# Each cell also belongs to 3 groups of cells, (1) the cells in its
+# vertical column, (2) horizontal row, and (3) the 3x3 block of
+# neighboring cells.  By looking at the cells in each of the groups,
+# an individual cell can report on the list of possible numbers that
+# are available for assignment to the cell. (If a cell already has an
+# assigned number, the set of available numbers is empty).
+#
 class Cell
   attr_reader :number
 
@@ -39,6 +50,10 @@ class Cell
   end
 end
 
+# Cells are organized into groups.  Each group consists of 9 cells
+# where the number assigned to a cell must be unique within the group.
+# Groups are able to report the current set of assigned numbers within
+# the group.
 class Group
   def initialize
     @cells = []
@@ -55,9 +70,15 @@ class Group
   end
 end
 
+# A Sudoku board contains the 81 cells required by the puzzle.  The
+# groupings of the cells is specified by the board in the
+# :define_groups method.  The standard grouping is 9 row groups, 9
+# column groups and 9 3x3 groups.
+#
 class Board
   include Enumerable
 
+  # Initialize a board with a set of unassigned cells.
   def initialize(verbose=nil)
     @verbose = verbose
     @cells = (0...81).map { |i|
@@ -66,6 +87,8 @@ class Board
     define_groups
   end
 
+  # Parse an encoded puzzle string.  Spaces or periods ('.') are
+  # treated as unassigned cells.  Newlines and tabs are ignored.
   def parse(string)
     numbers = string.gsub(/^#.*$/, '').gsub(/[\r\n\t]/, '').
       split(//).map { |n| n.to_i }
@@ -75,20 +98,27 @@ class Board
     self
   end
 
+  # Iterate over the cells of the puzzle.  Iteration starts in the
+  # upper left corner and continues across each row.
   def each
     @cells.each do |cell|
       yield cell
     end
   end
 
+  # Has the puzzle been solved?  In other words, have all the cells
+  # been assigned numbers?
   def solved?
     all? { |cell| cell.number }
   end
 
+  # Are we stuck?  In other words, is there an unassigned cell where
+  # there are no available numbers to be assigned to it.
   def stuck?
     any? { |cell| cell.number.nil? && cell.available_numbers.size == 0 }
   end
   
+  # Provide a human readable version of the board in a grid format.
   def to_s
     encoding.
       gsub(/.../, "\\0 ").
@@ -101,6 +131,11 @@ class Board
     "<Board #{encoding}>"
   end
 
+  # Encode the board into an 81 character string.  Each character
+  # represents the number stored in each cell.  Unassigned cells are
+  # represented by a '.'.  Cells are ordered starting in the upper
+  # left corner and sweeping first left to right across the row, and
+  # then each successive row.
   def encoding
     map { |cell| cell.number || "." }.join
   end
