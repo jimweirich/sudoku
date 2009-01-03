@@ -311,8 +311,12 @@ class Board
 end
 
 class SudokuSolver
+  def new_board(string)
+    Board.new(true).parse(string)
+  end
+  
   def solve(string)
-      board = Board.new(true).parse(string)
+      board = new_board(string)
       puts board
       board.solve
       puts
