@@ -256,52 +256,59 @@ class Board
 
   # Define row groups.
   def define_rows
-    9.times do |r|
-      define_group(cell_list(r * 9, 1))
-    end
+    define_groupings(
+      "aaaaaaaaa" +
+      "bbbbbbbbb" +
+      "ccccccccc" +
+      "ddddddddd" +
+      "eeeeeeeee" +
+      "fffffffff" +
+      "ggggggggg" +
+      "hhhhhhhhh" +
+      "iiiiiiiii")
   end
 
   # Define column groups.
   def define_columns
-    9.times do |c|
-      define_group(cell_list(c, 9))
-    end
+    define_groupings(
+      "abcdefghi" +
+      "abcdefghi" +
+      "abcdefghi" +
+      "abcdefghi" +
+      "abcdefghi" +
+      "abcdefghi" +
+      "abcdefghi" +
+      "abcdefghi" +
+      "abcdefghi")
   end
 
-  # Define the 3x3 groups.
+  # Define column groups.
   def define_blocks
-    3.times do |c|
-      3.times do |r|
-        define_block(c*3 + r*27)
-      end
+    define_groupings(
+      "aaabbbccc" +
+      "aaabbbccc" +
+      "aaabbbccc" +
+      "dddeeefff" +
+      "dddeeefff" +
+      "dddeeefff" +
+      "ggghhhiii" +
+      "ggghhhiii" +
+      "ggghhhiii")
+  end
+
+  # Define a set of groups as specified by a 9x9 string stored in
+  # row-major format.  Each position in the string represents a cell
+  # on the grid.  Each character value in the string represents a
+  # grouping of cells.  All cell positions with the same character
+  # will be put in the same group.
+  def define_groupings(string)
+    groups = Hash.new { |h, k| h[k] = Group.new }
+    group_ids = string.split(//)
+    each do |cell|
+      group_id = group_ids.shift
+      groups[group_id] << cell
     end
   end
-
-  # Define a single 3x3 group starting at :index.
-  def define_block(index)
-    define_group(
-      cell_list(index, 1, 3) +
-      cell_list(index+9, 1, 3) +
-      cell_list(index+18, 1, 3))
-  end
-
-  # Define a group of cells specified by a list of indicies for the
-  # cells.
-  def define_group(indicies)
-    g = Group.new
-    indicies.each do |i| g << @cells[i] end
-  end
-
-  # Create a list (with the given length) of cell indicies that start
-  # with :index and increment by :increment.
-  def cell_list(index, increment, length=9)
-    result = []
-    length.times do |i|
-      result << index + increment * i
-    end
-    result
-  end
-  
 end
 
 if __FILE__ == $0 then
