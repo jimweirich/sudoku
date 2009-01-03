@@ -169,7 +169,7 @@ class BoardTest < Test::Unit::TestCase
     end
 
     should 'solve the Wikipedia Puzzle with DOS line endings' do
-      board = Board.new.parse(open("wiki_dos.sud") { |f| f.read })
+      board = Board.new.parse(open("puzzles/wiki_dos.sud") { |f| f.read })
       board.solve
 
       assert board.solved?
