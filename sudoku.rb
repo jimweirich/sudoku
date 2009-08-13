@@ -178,7 +178,7 @@ class Board
       break if solved?
       if stuck?
         fail "No Solution Found" if alternatives.empty?
-        puts "Backtracking (#{alternatives.size})" if @verbose
+        say "Backtracking (#{alternatives.size})"
         guess(alternatives)
       else
         cell = find_candidate_for_guessing
@@ -241,7 +241,7 @@ class Board
   def guess(alternatives)
     state, cell, number = alternatives.pop
     parse(state)
-    puts "Guessing #{number} at #{cell}" if @verbose
+    say "Guessing #{number} at #{cell}"
     cell.number = number        
   end
 
@@ -309,6 +309,10 @@ class Board
       next unless group_id =~ /^[a-zA-Z]$/
       groups[group_id] << cell
     end
+  end
+
+  def say(message)
+    puts message if @verbose
   end
 end
 
