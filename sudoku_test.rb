@@ -25,6 +25,10 @@ class CellTest < Test::Unit::TestCase
       assert_equal "C25", @cell.to_s
     end
 
+    should 'be inspectable' do
+      assert_equal "C25", @cell.inspect
+    end
+
     should 'initially have no number' do
       assert_nil @cell.number
     end
@@ -98,7 +102,7 @@ class GroupTest < Test::Unit::TestCase
   end
 end
 
-class BoardTest < Test::Unit::TestCase
+module Puzzles
   Wiki =
     "53  7    " +
     "6  195   " +
@@ -131,10 +135,18 @@ class BoardTest < Test::Unit::TestCase
     " 6       " +
     "8    7 5 " +
     " 436 81  "
-  
+end
+
+class BoardTest < Test::Unit::TestCase
+  include Puzzles
+
   context 'a board' do
     setup do
       @board = Board.new
+    end
+
+    should 'be inspectable' do
+      assert_match %r(^<Board \.{81}>$), @board.inspect
     end
 
     should 'initially give all 9 numbers for all cells' do
@@ -201,5 +213,52 @@ class BoardTest < Test::Unit::TestCase
         board.encoding      
     end
 
+  end
+end
+
+class SudokuSolverTest < Test::Unit::TestCase
+  WikiPuzzleFile = 'puzzles/wiki.sud'
+      SOLUTION = %{5 3 4  6 7 8  9 1 2  
+6 7 2  1 9 5  3 4 8  
+1 9 8  3 4 2  5 6 7  
+
+8 5 9  7 6 1  4 2 3  
+4 2 6  8 5 3  7 9 1  
+7 1 3  9 2 4  8 5 6  
+
+9 6 1  5 3 7  2 8 4  
+2 8 7  4 1 9  6 3 5  
+3 4 5  2 8 6  1 7 9}
+      
+
+  def redirect_output
+    old_stdout = $stdout
+    $stdout = StringIO.new
+    yield
+    $stdout.string
+  ensure
+    $stdout = old_stdout
+  end
+
+  context 'a solver' do
+    setup do
+      @solver = SudokuSolver.new
+    end
+
+    should 'solve a puzzle' do
+      result = redirect_output do
+        @solver.run([WikiPuzzleFile])
+      end
+      assert_match(/#{SOLUTION}/, result)
+    end
+
+    should 'complain if no file given' do
+      result = redirect_output do
+        assert_raise(SystemExit) do
+          @solver.run([])          
+        end
+      end
+      assert_match(/Usage:/, result)
+    end
   end
 end
