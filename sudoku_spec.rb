@@ -47,21 +47,17 @@ end
 describe Group do
   Given(:group) { Group.new }
 
-  Then { group.should_not be_nil }
+  Given(:cells) { (1..10).map { |i| Cell.new("C#{i}") } }
+  Given { cells.each do |c| group << c end }
 
-  context 'with cells' do
-    Given(:cells) { (1..10).map { |i| Cell.new("C#{i}") } }
-    Given { cells.each do |c| group << c end }
+  Then { group.numbers.should == Set[] }
 
-    Then { group.numbers.should == Set[] }
-
-    context 'with some numbers' do
-      Given {
-        cells[0].number = 3
-        cells[3].number = 6
-      }
-      Then { group.numbers.sort.should == [3, 6] }
-    end
+  context 'with some numbers' do
+    Given {
+      cells[0].number = 3
+      cells[3].number = 6
+    }
+    Then { group.numbers.sort.should == [3, 6] }
   end
 end
 
