@@ -3,8 +3,8 @@
 require 'rake/clean'
 require 'rake/testtask'
 
-task :default => :test
+task :default => :specs
 
-Rake::TestTask.new(:test) do |t|
-  t.test_files = FileList['**/*_test.rb']
+task :specs do
+  sh "rspec sudoku_spec.rb"
 end
