@@ -3,6 +3,8 @@
 require 'rake/clean'
 require 'rake/testtask'
 
+CLOBBER.include("coverage")
+
 task :default => :specs
 
 task :specs do
