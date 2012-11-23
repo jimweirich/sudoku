@@ -187,6 +187,8 @@ class Board
   #   case we need to backtrack.
   #
   def solve
+    @strategy = CellStrategy.new(self)
+    @group_strategy = GroupStrategy.new(self)
     alternatives = []
     while true
       solve_easy_cells
@@ -208,34 +210,8 @@ class Board
   # Work toward a solution by assigning numbers to all the cells that
   # have only one possibility.
   def solve_easy_cells
-    while solve_one_easy_cell # || solve_one_medium_cell
+    while @strategy.solve || @group_strategy.solve
     end
-  end
-
-  # Find a cell with only one possibility and fill it.  Return true if
-  # you are able to fill a square, otherwise return false.
-  def solve_one_easy_cell
-    cells.each do |cell|
-      an = cell.available_numbers
-      if an.size == 1
-        puts "Put #{an.to_a.first} at #{cell}" if @verbose
-        cell.number = an.to_a.first
-        return true
-      end
-    end
-    return false
-  end
-
-  def solve_one_medium_cell
-    groups.each do |group|
-      group.open_cells_map.each do |number, cells|
-        if cells.size == 1
-          cells.first.number = number
-          return true
-        end
-      end
-    end
-    return false
   end
 
   # Find a candidate cell for guessing.  The candidate must be an
@@ -341,6 +317,59 @@ class Board
 
   def say(message)
     puts message if @verbose
+  end
+  public :say
+end
+
+class SolutionStrategy
+  def initialize(board)
+    @board = board
+  end
+
+  private
+
+  def say(*args)
+    @board.say(*args)
+  end
+
+  def board
+    @board
+  end
+
+  def solve_cell(cell, number, msg)
+    say "Put #{number} at #{cell} (#{msg})"
+    cell.number = number
+  end
+end
+
+class CellStrategy < SolutionStrategy
+  # Find a cell with only one possibility and fill it.  Return true if
+  # you are able to fill a square, otherwise return false.
+  def solve
+    board.cells.each do |cell|
+      an = cell.available_numbers
+      if an.size == 1
+        solve_cell(cell, an.to_a.first, "Cell")
+        return true
+      end
+    end
+    return false
+  end
+end
+
+class GroupStrategy < SolutionStrategy
+  # Find a number that has only one possible assignment in a given
+  # group.
+  def solve
+    board.groups.each do |group|
+      group.open_cells_map.each do |number, cells|
+        if cells.size == 1
+          solve_cell cells.first, number, "Group"
+          return true
+        end
+      end
+    end
+    return false
   end
 end
 
