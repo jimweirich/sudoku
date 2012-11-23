@@ -187,65 +187,12 @@ class Board
   #   case we need to backtrack.
   #
   def solve
-    @strategy = CellStrategy.new(self)
-    @group_strategy = GroupStrategy.new(self)
-    alternatives = []
-    while true
-      solve_easy_cells
-      break if solved?
-      if stuck?
-        fail "No Solution Found" if alternatives.empty?
-        say "Backtracking (#{alternatives.size})"
-        guess(alternatives)
-      else
-        cell = find_candidate_for_guessing
-        remember_alternatives(cell, alternatives)
-        guess(alternatives)
+    strategies = [ CellStrategy.new(self), GroupStrategy.new(self), BacktrackingStrategy.new(self) ]
+    while ! solved?
+      unless strategies.find { |s| s.solve }
+        fail "No Solution Found"
       end
     end
-  end
-
-  private
-
-  # Work toward a solution by assigning numbers to all the cells that
-  # have only one possibility.
-  def solve_easy_cells
-    while @strategy.solve || @group_strategy.solve
-    end
-  end
-
-  # Find a candidate cell for guessing.  The candidate must be an
-  # unassigned cell.  Prefer cells with the fewest number of available
-  # numbers (just to minimize backtracking).
-  def find_candidate_for_guessing
-    unassigned_cells.sort_by { |cell|
-      [cell.available_numbers.size, to_s]
-    }.first
-  end
-
-  # Return a list of unassigned cells on the board.
-  def unassigned_cells
-    cells.to_a.reject { |cell| cell.number }
-  end
-
-  # Remember the all the alternative choices for the given cell on the
-  # list of alternatives.  An alternative is stored as a 3-tuple
-  # consisting of the current encoded state of the board, the cell and
-  # an available number.
-  def remember_alternatives(cell, alternatives)
-    cell.available_numbers.each do |n|
-      alternatives.push([encoding, cell, n])
-    end
-  end
-
-  # Make a guess by pulling an alternative from the list of remembered
-  # alternatives and.  The state of the board at the remembered
-  # alternative is restored and the choice is made for that cell.
-  def guess(alternatives)
-    state, cell, number = alternatives.pop
-    parse(state)
-    say "Guessing #{number} at #{cell}"
-    cell.number = number
   end
 
   # Define the groups of cells for this puzzle.  Override this method
@@ -373,18 +320,83 @@ class GroupStrategy < SolutionStrategy
   end
 end
 
+class BacktrackingStrategy < SolutionStrategy
+  def initialize(board)
+    super
+    @alternatives = []
+  end
+
+  def solve
+    if ! board.stuck?
+      cell = find_candidate_for_guessing
+      remember_alternatives(cell)
+      guess
+    elsif @alternatives.empty?
+      false
+    else
+      say "Backtracking (#{plural(@alternatives.size, 'alternative')} available)"
+      guess
+    end
+  end
+
+  private
+
+  # Find a candidate cell for guessing.  The candidate must be an
+  # unassigned cell.  Prefer cells with the fewest number of available
+  # numbers (just to minimize backtracking).
+  def find_candidate_for_guessing
+    unassigned_cells.sort_by { |cell|
+      [cell.available_numbers.size, to_s]
+    }.first
+  end
+
+  # Return a list of unassigned cells on the board.
+  def unassigned_cells
+    board.cells.to_a.reject { |cell| cell.number }
+  end
+
+  # Remember the all the alternative choices for the given cell on the
+  # list of alternatives.  An alternative is stored as a 3-tuple
+  # consisting of the current encoded state of the board, the cell and
+  # an available number.
+  def remember_alternatives(cell)
+    cell.available_numbers.each do |n|
+      @alternatives.push([board.encoding, cell, n])
+    end
+  end
+
+  # Make a guess by pulling an alternative from the list of remembered
+  # alternatives and.  The state of the board at the remembered
+  # alternative is restored and the choice is made for that cell.
+  def guess
+    state, cell, number = @alternatives.pop
+    board.parse(state)
+    solve_cell(cell, number, "Guess, #{plural(@alternatives.size, 'alternative')} remaining")
+    true
+  end
+
+  # Pluralize +word+.  Assume simply adding an 's' is sufficient.
+  def plural(n, word)
+    if n == 1
+      "#{n} #{word}"
+    else
+      "#{n} #{word}s"
+    end
+  end
+end
+
 class SudokuSolver
   def new_board(string)
     Board.new(true).parse(string)
   end
 
   def solve(string)
-      board = new_board(string)
-      puts board
-      board.solve
-      puts
-      puts board
-      puts
+    board = new_board(string)
+    puts board
+    board.solve
+    puts
+    puts board
+    puts
   end
 
   def run(args)
