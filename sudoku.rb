@@ -111,8 +111,6 @@ end
 # column groups and 9 3x3 groups.
 #
 class Board
-  include Enumerable
-
   attr_reader :cells, :groups
 
   # Initialize a board with a set of unassigned cells.
