@@ -126,7 +126,7 @@ describe Board do
   Then { board.cells.size.should == 9 * 9 }
   Then { board.groups.size.should == 3 * 9 }
   Then {
-    board.each do |cell|
+    board.cells.each do |cell|
       cell.available_numbers.sort.should == (1..9).to_a
     end
   }

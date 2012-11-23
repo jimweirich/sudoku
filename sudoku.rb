@@ -129,30 +129,22 @@ class Board
   def parse(string)
     numbers = string.gsub(/^#.*$/, '').gsub(/[\r\n\t]/, '').
       split(//).map { |n| n.to_i }
-    each do |cell|
+    cells.each do |cell|
       cell.number = numbers.shift
     end
     self
   end
 
-  # Iterate over the cells of the puzzle.  Iteration starts in the
-  # upper left corner and continues across each row.
-  def each
-    @cells.each do |cell|
-      yield cell
-    end
-  end
-
   # Has the puzzle been solved?  In other words, have all the cells
   # been assigned numbers?
   def solved?
-    all? { |cell| cell.number }
+    cells.all? { |cell| cell.number }
   end
 
   # Are we stuck?  In other words, is there an unassigned cell where
   # there are no available numbers to be assigned to it.
   def stuck?
-    any? { |cell| cell.unassigned? && cell.available_numbers.size == 0 }
+    cells.any? { |cell| cell.unassigned? && cell.available_numbers.size == 0 }
   end
 
   # Provide a human readable version of the board in a grid format.
@@ -175,7 +167,7 @@ class Board
   # left corner and sweeping first left to right across the row, and
   # then each successive row.
   def encoding
-    map { |cell| cell.number || "." }.join
+    cells.map { |cell| cell.number || "." }.join
   end
 
   # Solve the puzzle represente by the board.  The solution algorithm
@@ -216,14 +208,14 @@ class Board
   # Work toward a solution by assigning numbers to all the cells that
   # have only one possibility.
   def solve_easy_cells
-    while solve_one_easy_cell || solve_one_medium_cell
+    while solve_one_easy_cell # || solve_one_medium_cell
     end
   end
 
   # Find a cell with only one possibility and fill it.  Return true if
   # you are able to fill a square, otherwise return false.
   def solve_one_easy_cell
-    each do |cell|
+    cells.each do |cell|
       an = cell.available_numbers
       if an.size == 1
         puts "Put #{an.to_a.first} at #{cell}" if @verbose
@@ -257,7 +249,7 @@ class Board
 
   # Return a list of unassigned cells on the board.
   def unassigned_cells
-    to_a.reject { |cell| cell.number }
+    cells.to_a.reject { |cell| cell.number }
   end
 
   # Remember the all the alternative choices for the given cell on the
@@ -339,7 +331,7 @@ class Board
   def define_groupings(string)
     groups = Hash.new { |h, k| h[k] = Group.new }
     group_ids = string.split(//)
-    each do |cell|
+    cells.each do |cell|
       group_id = group_ids.shift
       next unless group_id =~ /^[a-zA-Z]$/
       groups[group_id] << cell
