@@ -87,6 +87,22 @@ class Group
   def numbers
     Set[*@cells.map { |c| c.number }.compact]
   end
+
+  # Set of open (i.e. unassigned) numbers in this group.
+  def open_numbers
+    Set[1,2,3,4,5,6,7,8,9] - numbers
+  end
+
+  # Set of open cells that could possibly hold the given number.
+  def cells_open_for(number)
+    Set[*@cells.select { |cell| cell.available_numbers.include?(number) }]
+  end
+
+  # Map of all open numbers to their open cells.
+  def open_cells_map
+    open_numbers.inject({}) { |h, n| h.merge(n => cells_open_for(n)) }
+  end
+
 end
 
 # A Sudoku board contains the 81 cells required by the puzzle.  The
@@ -97,13 +113,15 @@ end
 class Board
   include Enumerable
 
+  attr_reader :cells, :groups
+
   # Initialize a board with a set of unassigned cells.
   def initialize(verbose=nil)
     @verbose = verbose
     @cells = (0...81).map { |i|
       Cell.new("C#{(i/9)+1}#{(i%9)+1}")
     }
-    define_groups
+    @groups = define_groups
   end
 
   # Parse an encoded puzzle string.  Spaces or periods ('.') are
@@ -198,7 +216,7 @@ class Board
   # Work toward a solution by assigning numbers to all the cells that
   # have only one possibility.
   def solve_easy_cells
-    while solve_one_easy_cell
+    while solve_one_easy_cell || solve_one_medium_cell
     end
   end
 
@@ -211,6 +229,18 @@ class Board
         puts "Put #{an.to_a.first} at #{cell}" if @verbose
         cell.number = an.to_a.first
         return true
+      end
+    end
+    return false
+  end
+
+  def solve_one_medium_cell
+    groups.each do |group|
+      group.open_cells_map.each do |number, cells|
+        if cells.size == 1
+          cells.first.number = number
+          return true
+        end
       end
     end
     return false
@@ -254,9 +284,9 @@ class Board
   # if you wish to create board that support non-standard cell
   # groupings (such as http://www.websudoku.com/variation/?day=2)
   def define_groups
-    define_columns
-    define_rows
-    define_blocks
+    @groups = define_columns +
+      define_rows +
+      define_blocks
   end
 
   # Define row groups.
@@ -314,6 +344,7 @@ class Board
       next unless group_id =~ /^[a-zA-Z]$/
       groups[group_id] << cell
     end
+    groups.values
   end
 
   def say(message)

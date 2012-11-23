@@ -50,14 +50,36 @@ describe Group do
   Given(:cells) { (1..10).map { |i| Cell.new("C#{i}") } }
   Given { cells.each do |c| group << c end }
 
-  Then { group.numbers.should == Set[] }
+  AllNumbers = Set[1,2,3,4,5,6,7,8,9]
+
+  context "with no numbers assigned" do
+    Then { group.numbers.should == Set[] }
+    Then { group.open_numbers.should == AllNumbers }
+    Then { group.cells_open_for(1).should == Set[*cells] }
+    Then {
+      group.open_cells_map.should ==
+      AllNumbers.inject({}) { |res, n| res.merge(n => Set[*cells]) }
+    }
+  end
 
   context 'with some numbers' do
     Given {
-      cells[0].number = 3
-      cells[3].number = 6
+      [3,6].each do |i| cells[i].number = i end
     }
-    Then { group.numbers.sort.should == [3, 6] }
+    Then { group.numbers.should == Set[3,6] }
+    Then { group.open_numbers.should == AllNumbers - group.numbers }
+    Then { group.cells_open_for(3).should == Set[] }
+    Then { group.cells_open_for(1).should == Set[*cells] - Set[cells[3], cells[6]] }
+  end
+
+  context 'with all numbers' do
+    Given {
+      (1..9).each do |i| cells[i].number = i end
+    }
+    Then { group.numbers.should == AllNumbers }
+    Then { group.open_numbers.should == Set[] }
+    Then { group.cells_open_for(1).should == Set[] }
+    Then { group.open_cells_map.should == {} }
   end
 end
 
@@ -101,7 +123,8 @@ describe Board do
   Given(:board) { Board.new }
 
   Then { board.inspect.should =~ %r(^<Board \.{81}>$) }
-
+  Then { board.cells.size.should == 9 * 9 }
+  Then { board.groups.size.should == 3 * 9 }
   Then {
     board.each do |cell|
       cell.available_numbers.sort.should == (1..9).to_a
