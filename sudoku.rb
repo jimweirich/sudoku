@@ -111,6 +111,8 @@ end
 # column groups and 9 3x3 groups.
 #
 class Board
+  ParseError = Class.new(StandardError)
+
   attr_reader :cells, :groups
 
   # Initialize a board with a set of unassigned cells.
@@ -125,13 +127,21 @@ class Board
   # Parse an encoded puzzle string.  Spaces or periods ('.') are
   # treated as unassigned cells.  Newlines and tabs are ignored.
   def parse(string)
-    numbers = string.gsub(/^#.*$/, '').gsub(/[\r\n\t]/, '').
-      split(//).map { |n| n.to_i }
+    clean_string = clean(string)
+    fail ParseError, "Puzzle encoding too short" if clean_string.size < 81
+    fail ParseError, "Puzzle encoding too long" if clean_string.size > 81
+    fail ParseError, "Puzzle contains invalid characters" if clean_string !~ /^[ .0-9]+$/
+    numbers = clean_string.split(//).map { |n| n.to_i }
     cells.each do |cell|
       cell.number = numbers.shift
     end
     self
   end
+
+  def clean(string)
+    string.gsub(/^#.*$/, '').gsub(/[\r\n\t]/, '')
+  end
+  private :clean
 
   # Has the puzzle been solved?  In other words, have all the cells
   # been assigned numbers?
@@ -168,22 +178,9 @@ class Board
     cells.map { |cell| cell.number || "." }.join
   end
 
-  # Solve the puzzle represente by the board.  The solution algorithm
-  # is roughly:
-  #
-  # * Put numbers in all the cells where there is only one
-  #   possible choice (the _easy_ squares).
-  # * If all cells have been assigned, then we are done!
-  # * If all unassigned cells have no possibilities, then we
-  #   are stuck.  Backtrack by restoring the state of the board
-  #   to the last guess and make a different guess.  If there
-  #   are no more alternatives, then we have failed to solve
-  #   the puzzle.
-  # * Otherwise, just pick one of the cells with the fewest
-  #   possible numbers (to minimize backtracking) and just guess
-  #   at one of the numbers.  Remember the other choices in
-  #   case we need to backtrack.
-  #
+  # Solve the puzzle represented by the board. Try each of the
+  # solution strategies until the puzzle is solved or the solutions
+  # are unable to make any progress.
   def solve
     strategies = [ CellStrategy.new(self), GroupStrategy.new(self), BacktrackingStrategy.new(self) ]
     while ! solved?
@@ -281,12 +278,15 @@ class SolutionStrategy
     @board
   end
 
-  def solve_cell(cell, number, msg)
+  def assign(cell, number, msg)
     say "Put #{number} at #{cell} (#{msg})"
     cell.number = number
   end
 end
 
+# If any cell has only one possible number that may be assigned to it,
+# then assign that number.
+#
 class CellStrategy < SolutionStrategy
   # Find a cell with only one possibility and fill it.  Return true if
   # you are able to fill a square, otherwise return false.
@@ -294,7 +294,7 @@ class CellStrategy < SolutionStrategy
     board.cells.each do |cell|
       an = cell.available_numbers
       if an.size == 1
-        solve_cell(cell, an.to_a.first, "Cell")
+        assign(cell, an.to_a.first, "Cell")
         return true
       end
     end
@@ -302,6 +302,9 @@ class CellStrategy < SolutionStrategy
   end
 end
 
+# If within any group there is a number that can only be assigned to
+# single cell, then assign that number to the cell.
+#
 class GroupStrategy < SolutionStrategy
   # Find a number that has only one possible assignment in a given
   # group.
@@ -309,7 +312,7 @@ class GroupStrategy < SolutionStrategy
     board.groups.each do |group|
       group.open_cells_map.each do |number, cells|
         if cells.size == 1
-          solve_cell cells.first, number, "Group"
+          assign cells.first, number, "Group"
           return true
         end
       end
@@ -318,6 +321,19 @@ class GroupStrategy < SolutionStrategy
   end
 end
 
+# Guess a cell assignment.
+#
+# If the board is not stuck, then make a guess at an arbitrary cell.
+# Remember the cell and the other choices. Choose the arbitrary cell
+# by looking for cells with the fewest number of choices (this
+# minimizes backtracking).
+#
+# If the board is stuck, then restore the board to a previous state
+# and make a different choice.
+#
+# If the board is stuck, and there are no alternatives, then we can't
+# move.
+#
 class BacktrackingStrategy < SolutionStrategy
   def initialize(board)
     super
@@ -369,7 +385,7 @@ class BacktrackingStrategy < SolutionStrategy
   def guess
     state, cell, number = @alternatives.pop
     board.parse(state)
-    solve_cell(cell, number, "Guess, #{plural(@alternatives.size, 'alternative')} remaining")
+    assign(cell, number, "Guessing, #{plural(@alternatives.size, 'alternative')} remaining")
     true
   end
 

@@ -1,6 +1,8 @@
 require 'rspec/given'
 require 'sudoku'
 
+AllNumbers = Set[1,2,3,4,5,6,7,8,9]
+
 describe Cell do
 
   def create_group_with(cell, *numbers)
@@ -14,33 +16,28 @@ describe Cell do
     g
   end
 
-  describe 'a cell' do
-    Given(:cell) { Cell.new("C25") }
+  Given(:cell) { Cell.new("C25") }
 
-    Then { cell.to_s.should == "C25" }
-    Then { cell.inspect.should ==  "C25" }
+  Then { cell.to_s.should == "C25" }
+  Then { cell.inspect.should ==  "C25" }
+  Then { cell.number.should be_nil }
+  Then { cell.available_numbers.should == AllNumbers }
+
+  context 'when setting the number' do
+    When { cell.number = 4 }
+    Then { cell.number.should == 4 }
+    Then { cell.available_numbers.should == Set[] }
+  end
+
+  context 'when setting number to zero' do
+    When { cell.number = 0 }
     Then { cell.number.should be_nil }
-    Then { cell.available_numbers.should == Set[*(1..9)] }
+    Then { cell.available_numbers.should == AllNumbers }
+  end
 
-    context 'when setting the number' do
-      When { cell.number = 4 }
-      Then { cell.number.should == 4 }
-    end
-
-    context 'when setting number to zero' do
-      When { cell.number = 0 }
-      Then { cell.number.should be_nil }
-    end
-
-    context 'within a group' do
-      Given!(:group) { create_group_with(cell, 3, 4, 5) }
-      Then { cell.available_numbers.should == Set[1, 2, 6, 7, 8, 9] }
-
-      context "when assigning a number" do
-        When { cell.number = 6 }
-        Then { cell.available_numbers.should == Set[] }
-      end
-    end
+  context 'within a group' do
+    Given { create_group_with(cell, 3, 4, 5) }
+    Then { cell.available_numbers.should == AllNumbers - Set[3, 4, 5] }
   end
 end
 
@@ -50,15 +47,12 @@ describe Group do
   Given(:cells) { (1..10).map { |i| Cell.new("C#{i}") } }
   Given { cells.each do |c| group << c end }
 
-  AllNumbers = Set[1,2,3,4,5,6,7,8,9]
-
   context "with no numbers assigned" do
     Then { group.numbers.should == Set[] }
     Then { group.open_numbers.should == AllNumbers }
     Then { group.cells_open_for(1).should == Set[*cells] }
     Then {
-      group.open_cells_map.should ==
-      AllNumbers.inject({}) { |res, n| res.merge(n => Set[*cells]) }
+      group.open_cells_map.should == Hash[ AllNumbers.map { |n| [n, Set[*cells]] } ]
     }
   end
 
@@ -66,10 +60,17 @@ describe Group do
     Given {
       [3,6].each do |i| cells[i].number = i end
     }
+
+    Given(:except36) { Set[*cells] - Set[cells[3], cells[6]] }
+
     Then { group.numbers.should == Set[3,6] }
     Then { group.open_numbers.should == AllNumbers - group.numbers }
     Then { group.cells_open_for(3).should == Set[] }
     Then { group.cells_open_for(1).should == Set[*cells] - Set[cells[3], cells[6]] }
+
+    Then {
+      group.open_cells_map.should == Hash[ [1,2,4,5,7,8,9].map { |n| [n, except36] } ]
+    }
   end
 
   context 'with all numbers' do
@@ -95,6 +96,19 @@ module Puzzles
     "   419  5" +
     "    8  79"
 
+  WikiEncoding = Wiki.gsub(/ /, '.')
+
+  WikiSolution =
+    "534678912" +
+    "672195348" +
+    "198342567" +
+    "859761423" +
+    "426853791" +
+    "713924856" +
+    "961537284" +
+    "287419635" +
+    "345286179"
+
   Medium =
     " 4   7 3 " +
     "  85  1  " +
@@ -106,6 +120,17 @@ module Puzzles
     "  7  29  " +
     " 5 7   8 "
 
+  MediumSolution =
+    "942187635" +
+    "368594127" +
+    "715236498" +
+    "593478216" +
+    "476921853" +
+    "281365749" +
+    "829643571" +
+    "137852964" +
+    "654719382"
+
   Evil =
     "  53 694 " +
     " 3 1    6" +
@@ -116,10 +141,20 @@ module Puzzles
     " 6       " +
     "8    7 5 " +
     " 436 81  "
+
+  EvilSolution =
+    "285376941" +
+    "439125786" +
+    "176849235" +
+    "752981364" +
+    "618734529" +
+    "394562817" +
+    "567213498" +
+    "821497653" +
+    "943658172"
 end
 
 describe Board do
-
   Given(:board) { Board.new }
 
   Then { board.inspect.should =~ %r(^<Board \.{81}>$) }
@@ -127,70 +162,77 @@ describe Board do
   Then { board.groups.size.should == 3 * 9 }
   Then {
     board.cells.each do |cell|
-      cell.available_numbers.sort.should == (1..9).to_a
+      cell.available_numbers.should == Set[*(1..9)]
     end
   }
 
-  describe 'parse a string representation of the puzzle' do
-    Given { board.parse(Puzzles::Wiki) }
-    Then {
-      board.to_s.should == (
-        "5 3 .  . 7 .  . . .  \n" +
-        "6 . .  1 9 5  . . .  \n" +
-        ". 9 8  . . .  . 6 .  \n\n" +
-        "8 . .  . 6 .  . . 3  \n" +
-        "4 . .  8 . 3  . . 1  \n" +
-        "7 . .  . 2 .  . . 6  \n\n" +
-        ". 6 .  . . .  2 8 .  \n" +
-        ". . .  4 1 9  . . 5  \n" +
-        ". . .  . 8 .  . 7 9  \n\n")
-    }
+  describe "#parse" do
+    Given(:puzzle) { Puzzles::Wiki }
 
-    describe 'solve the Wikipedia Puzzle' do
-      When { board.solve }
+    When(:result) { board.parse(puzzle) }
 
-      Then { board.should be_solved }
-      Then { board.encoding.should ==
-        "534678912672195348198342567" +
-        "859761423426853791713924856" +
-        "961537284287419635345286179"
-      }
+    context "with a good encoding" do
+      # Invariant { result.should_not have_failed }
+
+      context "and standard line encoding" do
+        Then { board.encoding.should == Puzzles::WikiEncoding }
+      end
+
+      context "and dots instead of spaces" do
+        Given(:puzzle) { Puzzles::Wiki.gsub(/ /, '.') }
+        Then { board.encoding.should == Puzzles::WikiEncoding }
+      end
+
+      context "and DOS line encodings" do
+        Given(:puzzle) { Puzzles::Wiki.gsub(/\n/, "\r\n") }
+        Then { board.encoding.should == Puzzles::WikiEncoding }
+      end
+
+      context "and comments" do
+        Given(:puzzle) { "# Standard Wiki example\n\n" + Puzzles::Wiki }
+        Then { board.encoding.should == Puzzles::WikiEncoding }
+      end
+    end
+
+    context "with a bad encoding" do
+      context "that is short" do
+        Given(:puzzle) { Puzzles::Wiki[0...-1] }
+        Then { result.should have_failed(Board::ParseError, /too short/i) }
+      end
+
+      context "that is long" do
+        Given(:puzzle) { Puzzles::Wiki + "." }
+        Then { result.should have_failed(Board::ParseError, /too long/i) }
+      end
+
+      context "that has invalid characters" do
+        Given(:puzzle) { p = Puzzles::Wiki.dup; p[39] = "x"; p }
+        Then { result.should have_failed(Board::ParseError, /invalid.*char/i) }
+      end
     end
   end
 
-  describe 'solve the Wikipedia Puzzle with DOS line endings' do
-    Given(:board) { Board.new.parse(open("puzzles/wiki_dos.sud") { |f| f.read }) }
+  describe "solving" do
+    Given(:board) { Board.new.parse(puzzle) }
+
     When { board.solve }
 
-    Then { board.should be_solved }
-    Then { board.encoding.should ==
-      "534678912672195348198342567" +
-      "859761423426853791713924856" +
-      "961537284287419635345286179"
-    }
-  end
+    Invariant { board.should be_solved }
 
-  describe 'solve the Medium Puzzle' do
-    Given(:board) { Board.new.parse(Puzzles::Medium) }
-    When { board.solve }
-    Then { board.should be_solved }
-    Then { board.encoding.should ==
-      "942187635368594127715236498" +
-      "593478216476921853281365749" +
-      "829643571137852964654719382"
-    }
-  end
+    context "with the wiki puzzle" do
+      Given(:puzzle) { Puzzles::Wiki }
+      Then { board.encoding.should == Puzzles::WikiSolution }
+    end
 
-  describe 'solve the Evil Puzzle' do
-    Given(:board) { Board.new.parse(Puzzles::Evil) }
-    When { board.solve }
+    context "with the medium puzzle" do
+      Given(:puzzle) { Puzzles::Medium }
+      Then { board.encoding.should == Puzzles::MediumSolution }
+    end
 
-    Then { board.should be_solved }
-    Then { board.encoding.should ==
-      "285376941439125786176849235" +
-      "752981364618734529394562817" +
-      "567213498821497653943658172"
-    }
+    context 'with the Evil Puzzle' do
+      Given(:puzzle) { Puzzles::Evil }
+      Then { board.encoding.should == Puzzles::EvilSolution }
+    end
   end
 end
 
