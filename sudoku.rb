@@ -413,7 +413,6 @@ class SudokuSolver
 
   def solve(string)
     board = new_board(string)
-    board.strategies = [BacktrackingStrategy.new(board)]
     puts board
     board.solve
     puts
