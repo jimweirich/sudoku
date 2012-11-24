@@ -187,7 +187,7 @@ describe Board do
     When(:result) { board.parse(puzzle) }
 
     context "with a good encoding" do
-      # Invariant { result.should_not have_failed }
+      Invariant { result.should_not have_failed }
 
       context "and standard line encoding" do
         Then { board.encoding.should == Puzzles::WikiEncoding }
@@ -241,7 +241,7 @@ describe Board do
 
     context "successfully" do
       Invariant { board.should be_solved }
-      # Invariant { result.should_not have_failed }
+      Invariant { result.should_not have_failed }
 
       context "with the wiki puzzle" do
         Given(:puzzle) { Puzzles::Wiki }
