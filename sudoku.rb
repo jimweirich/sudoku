@@ -270,9 +270,21 @@ class Board
   public :say
 end
 
+# Base class for solution strategies.
+#
+# Provides:
+# * Access to board
+# * verbose controlled output
+# * Cell assignment (with statistics)
+#
 class SolutionStrategy
   def initialize(board)
     @board = board
+    @assignments = 0
+  end
+
+  def statistics
+    { assignments: @assignments }
   end
 
   private
@@ -288,6 +300,7 @@ class SolutionStrategy
   def assign(cell, number, msg)
     say "Put #{number} at #{cell} (#{msg})"
     cell.number = number
+    @assignments += 1
   end
 end
 
@@ -345,6 +358,12 @@ class BacktrackingStrategy < SolutionStrategy
   def initialize(board)
     super
     @alternatives = []
+    @backtrack = 0
+    @max_alternatives = 0
+  end
+
+  def statistics
+    super.merge(backtrack: @backtrack, max_alternatives: @max_alternatives)
   end
 
   def solve
@@ -356,6 +375,7 @@ class BacktrackingStrategy < SolutionStrategy
       false
     else
       say "Backtracking (#{plural(@alternatives.size, 'alternative')} available)"
+      @backtrack += 1
       guess
     end
   end
@@ -384,6 +404,7 @@ class BacktrackingStrategy < SolutionStrategy
     cell.available_numbers.each do |n|
       @alternatives.push([board.encoding, cell, n])
     end
+    @max_alternatives = [@max_alternatives, @alternatives.size].max
   end
 
   # Make a guess by pulling an alternative from the list of remembered
@@ -407,14 +428,32 @@ class BacktrackingStrategy < SolutionStrategy
 end
 
 class SudokuSolver
+  STRATEGIES = {
+    'c' => CellStrategy,
+    'g' => GroupStrategy,
+    'b' => BacktrackingStrategy,
+  }
+
+  def initialize
+    @verbose = true
+    @statistics = false
+    @strategy_chars = 'cgb'
+  end
+
   def new_board(string)
-    Board.new(true).parse(string)
+    board = Board.new(@verbose).parse(string)
+    strats = @strategy_chars.chars.map { |c| STRATEGIES[c] }
+    board.strategies = strats.map { |sc| sc.new(board) }
+    board
   end
 
   def solve(string)
     board = new_board(string)
     puts board
+    t = Time.now
     board.solve
+    @solution_time = Time.now - t
+    @statistics = Hash[board.strategies.map { |s| [s.class, s.statistics] }]
     puts
     puts board
     puts
@@ -425,12 +464,36 @@ class SudokuSolver
       puts "Usage: ruby sudoku.rb sud-files..."
       exit
     end
+    while args.first =~ /^-/
+      arg = args.shift
+      case arg
+      when /^-v$/
+        @verbose = ! @verbose
+      when /^-s$/
+        @statistics = ! @statistics
+      when /^-S([cgb])*$/
+        @strategy_chars = $1
+      end
+    end
 
     args.each do |fn|
       puts "Solving #{fn} ----------------------------------------------"
       puts
       open(fn) do |f|
         solve(f.read)
+        show_statistics
+      end
+    end
+  end
+
+  def show_statistics
+    total = @statistics.inject(0) { |sum, (strat, hash)| sum + hash[:assignments] }
+    puts "Total Assignments: #{total}"
+    puts "Solution Time: #{'%4.2f' % @solution_time} seconds"
+    @statistics.each do |strat, hash|
+      puts "#{strat}"
+      hash.each do |key, value|
+        puts "    #{key}: #{value}"
       end
     end
   end
