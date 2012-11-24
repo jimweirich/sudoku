@@ -1,3 +1,6 @@
+require 'simplecov'
+SimpleCov.start
+
 require 'rspec/given'
 require 'sudoku'
 
@@ -36,7 +39,7 @@ describe Cell do
   end
 
   context 'within a group' do
-    Given { create_group_with(cell, 3, 4, 5) }
+    When { create_group_with(cell, 3, 4, 5) }
     Then { cell.available_numbers.should == AllNumbers - Set[3, 4, 5] }
   end
 end
@@ -152,6 +155,18 @@ module Puzzles
     "567213498" +
     "821497653" +
     "943658172"
+
+  Impossible =
+    "4 53 694 " +
+    " 3 1    6" +
+    "       3 " +
+    "7  9     " +
+    " 1  3  2 " +
+    "     2  7" +
+    " 6       " +
+    "8    7 5 " +
+    " 436 81  "
+
 end
 
 describe Board do
@@ -213,25 +228,42 @@ describe Board do
   end
 
   describe "solving" do
+    Given(:strategies) { [ CellStrategy, GroupStrategy, BacktrackingStrategy] }
     Given(:board) { Board.new.parse(puzzle) }
+    Given { board.strategies = strategies.map { |sc| sc.new(board) } }
 
-    When { board.solve }
+    When(:result) { board.solve }
 
-    Invariant { board.should be_solved }
-
-    context "with the wiki puzzle" do
-      Given(:puzzle) { Puzzles::Wiki }
-      Then { board.encoding.should == Puzzles::WikiSolution }
+    context "unsuccessfully" do
+      Given(:puzzle) { Puzzles::Impossible }
+      Then { result.should have_failed(Board::SolutionError, /no.*solution/i) }
     end
 
-    context "with the medium puzzle" do
-      Given(:puzzle) { Puzzles::Medium }
-      Then { board.encoding.should == Puzzles::MediumSolution }
-    end
+    context "successfully" do
+      Invariant { board.should be_solved }
+      # Invariant { result.should_not have_failed }
 
-    context 'with the Evil Puzzle' do
-      Given(:puzzle) { Puzzles::Evil }
-      Then { board.encoding.should == Puzzles::EvilSolution }
+      context "with the wiki puzzle" do
+        Given(:puzzle) { Puzzles::Wiki }
+        Then { board.encoding.should == Puzzles::WikiSolution }
+      end
+
+      context "with the medium puzzle" do
+        Given(:puzzle) { Puzzles::Medium }
+        Then { board.encoding.should == Puzzles::MediumSolution }
+      end
+
+      context 'with the Evil Puzzle' do
+        Given(:puzzle) { Puzzles::Evil }
+        Then { board.encoding.should == Puzzles::EvilSolution }
+      end
+
+      context "with only the Guessing strategy" do
+        Given(:strategies) { [ BacktrackingStrategy ] }
+        Given(:puzzle) { Puzzles::Evil }
+        Then { board.encoding.should == Puzzles::EvilSolution }
+      end
+
     end
   end
 end

@@ -111,9 +111,12 @@ end
 # column groups and 9 3x3 groups.
 #
 class Board
-  ParseError = Class.new(StandardError)
+  SudokuError = Class.new(StandardError)
+  ParseError = Class.new(SudokuError)
+  SolutionError = Class.new(SudokuError)
 
   attr_reader :cells, :groups
+  attr_writer :strategies
 
   # Initialize a board with a set of unassigned cells.
   def initialize(verbose=nil)
@@ -122,6 +125,11 @@ class Board
       Cell.new("C#{(i/9)+1}#{(i%9)+1}")
     }
     @groups = define_groups
+  end
+
+  def strategies
+    @strategies ||=
+      [CellStrategy, GroupStrategy, BacktrackingStrategy].map { |sc| sc.new(self) }
   end
 
   # Parse an encoded puzzle string.  Spaces or periods ('.') are
@@ -182,10 +190,9 @@ class Board
   # solution strategies until the puzzle is solved or the solutions
   # are unable to make any progress.
   def solve
-    strategies = [ CellStrategy.new(self), GroupStrategy.new(self), BacktrackingStrategy.new(self) ]
     while ! solved?
       unless strategies.find { |s| s.solve }
-        fail "No Solution Found"
+        fail SolutionError, "No Solution Found"
       end
     end
   end
@@ -406,6 +413,7 @@ class SudokuSolver
 
   def solve(string)
     board = new_board(string)
+    board.strategies = [BacktrackingStrategy.new(board)]
     puts board
     board.solve
     puts
@@ -429,6 +437,4 @@ class SudokuSolver
   end
 end
 
-if __FILE__ == $0 then
-  SudokuSolver.new.run(ARGV)
-end
+SudokuSolver.new.run(ARGV) if __FILE__ == $0
