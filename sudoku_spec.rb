@@ -318,4 +318,48 @@ describe "Sudoku Solver" do
     }
     Then { result.should =~ /Usage:/ }
   end
+
+  describe "argument handling" do
+    Given(:args) { [ '--' ] }
+    When { solver.run(args) }
+
+    Then { solver.verbose.should be_false }
+    Then { solver.statistics.should be_false }
+    Then {
+      solver.strategy_classes.should == [
+        CellStrategy, GroupStrategy, BacktrackingStrategy
+      ]
+    }
+
+    context "with verbose" do
+      Given(:args) { ['-v'] }
+      Then { solver.verbose.should be_true }
+    end
+
+    context "with statistics" do
+      Given(:args) { ['-s'] }
+      Then { solver.statistics.should be_true }
+    end
+
+    context "with strategies" do
+      Given(:args) { ['-Sc'] }
+      Then { solver.strategy_classes.should == [CellStrategy] }
+    end
+
+    context "with strategies" do
+      Given(:args) { ['-Sg'] }
+      Then { solver.strategy_classes.should == [GroupStrategy] }
+    end
+
+    context "with strategies" do
+      Given(:args) { ['-Sb'] }
+      Then { solver.strategy_classes.should == [BacktrackingStrategy] }
+    end
+
+    context "with strategies" do
+      Given(:args) { ['-Sgb'] }
+      Then { solver.strategy_classes.should == [GroupStrategy, BacktrackingStrategy] }
+    end
+
+  end
 end

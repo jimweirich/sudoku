@@ -428,6 +428,8 @@ class BacktrackingStrategy < SolutionStrategy
 end
 
 class SudokuSolver
+  attr_reader :verbose, :statistics
+
   STRATEGIES = {
     'c' => CellStrategy,
     'g' => GroupStrategy,
@@ -435,15 +437,14 @@ class SudokuSolver
   }
 
   def initialize
-    @verbose = true
+    @verbose = false
     @statistics = false
     @strategy_chars = 'cgb'
   end
 
   def new_board(string)
     board = Board.new(@verbose).parse(string)
-    strats = @strategy_chars.chars.map { |c| STRATEGIES[c] }
-    board.strategies = strats.map { |sc| sc.new(board) }
+    board.strategies = strategy_classes.map { |sc| sc.new(board) }
     board
   end
 
@@ -467,11 +468,13 @@ class SudokuSolver
     while args.first =~ /^-/
       arg = args.shift
       case arg
+      when /^--$/
+        # noop
       when /^-v$/
         @verbose = ! @verbose
       when /^-s$/
         @statistics = ! @statistics
-      when /^-S([cgb])*$/
+      when /^-S([cgb]*)$/
         @strategy_chars = $1
       end
     end
@@ -497,6 +500,11 @@ class SudokuSolver
       end
     end
   end
+
+  def strategy_classes
+    @strategy_chars.chars.map { |c| STRATEGIES[c] }
+  end
+
 end
 
 SudokuSolver.new.run(ARGV) if __FILE__ == $0
