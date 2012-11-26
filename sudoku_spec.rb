@@ -270,96 +270,66 @@ describe Board do
 end
 
 describe "Sudoku Solver" do
-  WikiPuzzleFile = 'puzzles/wiki.sud'
-  SOLUTION = %{5 3 4  6 7 8  9 1 2
-6 7 2  1 9 5  3 4 8
-1 9 8  3 4 2  5 6 7
+  SOLUTION_PATTERN = Puzzles::WikiSolution.chars.to_a.join('\s+')
 
-8 5 9  7 6 1  4 2 3
-4 2 6  8 5 3  7 9 1
-7 1 3  9 2 4  8 5 6
-
-9 6 1  5 3 7  2 8 4
-2 8 7  4 1 9  6 3 5
-3 4 5  2 8 6  1 7 9}
-
-  SOL_PATTERN = SOLUTION.gsub(/\s+/,'\s+')
-
-  def redirect_output
+  def run_top_level
     old_stdout = $stdout
-    $stdout = StringIO.new
-    yield
-    $stdout.string
-  ensure
-    $stdout = old_stdout
+    $stdout = output_string
+    begin
+      yield
+    ensure
+      $stdout = old_stdout
+    end
+  end
+
+  TMP_PUZZLE = 'tmp/puzzle.sud'
+
+  after do
+    FileUtils.rm_r 'tmp' rescue nil
   end
 
   Given(:puzzle_file) {
     FileUtils.mkdir("tmp") rescue nil
-    open('tmp/puzzle.sud', "w") { |f| f.puts(puzzle) }
-    'tmp/puzzle.sud'
+    open(TMP_PUZZLE, "w") { |f| f.puts(puzzle) }
+    TMP_PUZZLE
   }
-  Given(:solver) { SudokuSolver.new }
+  Given(:output_string) { StringIO.new }
+  Given(:output) { output_string.string }
   Given(:args) { [puzzle_file, '-v'] }
 
-  When(:result) {
-    redirect_output do
-      result = nil
-      begin
-        solver.run(args)
-      rescue SystemExit => ex
-        result = ex
-      end
-      result
-    end
-  }
+  Given(:solver) { SudokuSolver.new }
+
+  When(:result) { run_top_level { solver.run(args) } }
 
   describe 'solve a puzzle' do
-    Given(:puzzle) {
-      "53..7...." +
-      "6..195..." +
-      ".98....6." +
-      "8...6...3" +
-      "4..8.3..1" +
-      "7...2...6" +
-      ".6....28." +
-      "...419..5" +
-      "....8..79"
-    }
-    Then { result.should =~ /#{SOL_PATTERN}/ }
+    Given(:puzzle) { Puzzles::Wiki }
+    Then { output.should =~ /#{SOLUTION_PATTERN}/ }
   end
 
   describe 'failing to solve a puzzle' do
-    Given(:puzzle) {
-      "53..7...." +
-      "6..195..." +
-      ".98....6." +
-      "8...6...3" +
-      "4..8.3..1" +
-      "7...2...6" +
-      ".6....28." +
-      "...419..5" +
-      "7...8..79"
-    }
-    Then { result.should =~ /no +solution +found/i }
+    Given(:puzzle) { Puzzles::Impossible }
+    Then { output.should =~ /no +solution +found/i }
   end
 
   describe 'complain if no file given' do
     Given(:args) { [] }
-    Then { result.should =~ /Usage:/ }
+    Then { result.should have_failed(SystemExit) }
+    Then { output.should =~ /Usage:/ }
   end
 
   describe "argument handling" do
-    Given(:args) { [ '--' ] }
-    When(:result) { redirect_output { solver.run(args) } }
+    When(:result) { run_top_level { solver.run(args) } }
 
-    Then { solver.verbose.should be_false }
-    Then { solver.statistics.should be_false }
-    Then {
-      solver.strategy_classes.should == [
-        CellStrategy, GroupStrategy, BacktrackingStrategy
-      ]
-    }
+    context "no arguments" do
+      Given(:args) { [ '--' ] }
+      Then { solver.verbose.should be_false }
+      Then { solver.statistics.should be_false }
+      Then {
+        solver.strategy_classes.should == [
+          CellStrategy, GroupStrategy, BacktrackingStrategy
+        ]
+      }
+    end
 
     context "with verbose" do
       Given(:args) { ['-v'] }
@@ -389,6 +359,7 @@ describe "Sudoku Solver" do
     context "with bad option" do
       Given(:args) { ['-x'] }
       Then { result.should have_failed(SystemExit) }
+      Then { output.should =~ /(unrecognized|unknown).*-x/i }
     end
 
   end
