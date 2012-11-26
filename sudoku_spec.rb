@@ -113,61 +113,29 @@ module Puzzles
     "287419635" +
     "345286179"
 
-  Medium =
-    " 4   7 3 " +
-    "  85  1  " +
-    " 15 3  9 " +
-    "5   7 21 " +
-    "  6   8  " +
-    " 81 6   9" +
-    " 2  4 57 " +
-    "  7  29  " +
-    " 5 7   8 "
+  Extreme01 =
+    "..9748..." +
+    "7........" +
+    ".2.1.9..." +
+    "..7...24." +
+    ".64.1.59." +
+    ".98...3.." +
+    "...8.3.2." +
+    "........6" +
+    "...2759.."
 
-  MediumSolution =
-    "942187635" +
-    "368594127" +
-    "715236498" +
-    "593478216" +
-    "476921853" +
-    "281365749" +
-    "829643571" +
-    "137852964" +
-    "654719382"
+  Extreme01Solution =
+    "519748632" +
+    "783652419" +
+    "426139875" +
+    "357986241" +
+    "264317598" +
+    "198524367" +
+    "975863124" +
+    "832491756" +
+    "641275983"
 
-  Evil =
-    "  53 694 " +
-    " 3 1    6" +
-    "       3 " +
-    "7  9     " +
-    " 1  3  2 " +
-    "     2  7" +
-    " 6       " +
-    "8    7 5 " +
-    " 436 81  "
-
-  EvilSolution =
-    "285376941" +
-    "439125786" +
-    "176849235" +
-    "752981364" +
-    "618734529" +
-    "394562817" +
-    "567213498" +
-    "821497653" +
-    "943658172"
-
-  Impossible =
-    "4 53 694 " +
-    " 3 1    6" +
-    "       3 " +
-    "7  9     " +
-    " 1  3  2 " +
-    "     2  7" +
-    " 6       " +
-    "8    7 5 " +
-    " 436 81  "
-
+  Impossible = Wiki.sub(/5/,'3')
 end
 
 describe Board do
@@ -237,6 +205,7 @@ describe Board do
 
     context "unsuccessfully" do
       Given(:puzzle) { Puzzles::Impossible }
+      Given(:strategies) { [ CellStrategy ] }
       Then { result.should have_failed(Board::SolutionError, /no.*solution/i) }
     end
 
@@ -249,28 +218,18 @@ describe Board do
         Then { board.encoding.should == Puzzles::WikiSolution }
       end
 
-      context "with the medium puzzle" do
-        Given(:puzzle) { Puzzles::Medium }
-        Then { board.encoding.should == Puzzles::MediumSolution }
+      context "with the Extreme 01 puzzle" do
+        # The extreme puzzle is hard enough to force a backtracking
+        # solution, exercising all of the strategies in the solver.
+        Given(:puzzle) { Puzzles::Extreme01 }
+        Then { board.encoding.should == Puzzles::Extreme01Solution }
       end
-
-      context 'with the Evil Puzzle' do
-        Given(:puzzle) { Puzzles::Evil }
-        Then { board.encoding.should == Puzzles::EvilSolution }
-      end
-
-      context "with only the Guessing strategy" do
-        Given(:strategies) { [ BacktrackingStrategy ] }
-        Given(:puzzle) { Puzzles::Evil }
-        Then { board.encoding.should == Puzzles::EvilSolution }
-      end
-
     end
   end
 end
 
 describe "Sudoku Solver" do
-  SOLUTION_PATTERN = Puzzles::WikiSolution.chars.to_a.join('\s+')
+  SOLUTION_PATTERN = Regexp.new(Puzzles::WikiSolution.chars.to_a.join('\s+'))
 
   def run_top_level
     old_stdout = $stdout
@@ -296,8 +255,10 @@ describe "Sudoku Solver" do
   let(:output_string) { StringIO.new }
   let(:output) { output_string.string }
 
+  Given(:puzzle) { tbd }
   Given(:puzzle_file) { create_temp_puzzle(puzzle) }
-  Given(:args) { [puzzle_file, '-v'] }
+  Given(:extra_flags) { [ ] }
+  Given(:args) { [puzzle_file, '-v'] + extra_flags }
 
   Given(:solver) { SudokuSolver.new }
 
@@ -305,10 +266,11 @@ describe "Sudoku Solver" do
 
   describe 'solve a puzzle' do
     Given(:puzzle) { Puzzles::Wiki }
-    Then { output.should =~ /#{SOLUTION_PATTERN}/ }
+    Then { output.should =~ SOLUTION_PATTERN }
   end
 
   describe 'failing to solve a puzzle' do
+    Given(:extra_flags) { ['-v', '-scgb'] }
     Given(:puzzle) { Puzzles::Impossible }
     Then { output.should =~ /no +solution +found/i }
   end
