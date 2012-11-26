@@ -1,4 +1,5 @@
 require 'simplecov'
+require 'fileutils'
 SimpleCov.start
 
 require 'rspec/given'
@@ -293,35 +294,64 @@ describe "Sudoku Solver" do
     $stdout = old_stdout
   end
 
+  Given(:puzzle_file) {
+    FileUtils.mkdir("tmp") rescue nil
+    open('tmp/puzzle.sud', "w") { |f| f.puts(puzzle) }
+    'tmp/puzzle.sud'
+  }
   Given(:solver) { SudokuSolver.new }
+  Given(:args) { [puzzle_file, '-v'] }
+
+  When(:result) {
+    redirect_output do
+      result = nil
+      begin
+        solver.run(args)
+      rescue SystemExit => ex
+        result = ex
+      end
+      result
+    end
+  }
 
   describe 'solve a puzzle' do
-    Given(:result) {
-      redirect_output do
-        solver.run([WikiPuzzleFile])
-      end
+    Given(:puzzle) {
+      "53..7...." +
+      "6..195..." +
+      ".98....6." +
+      "8...6...3" +
+      "4..8.3..1" +
+      "7...2...6" +
+      ".6....28." +
+      "...419..5" +
+      "....8..79"
     }
     Then { result.should =~ /#{SOL_PATTERN}/ }
   end
 
-  describe 'complain if no file given' do
-    Given(:result) {
-      redirect_output do
-        result = nil
-        begin
-          solver.run([])
-        rescue SystemExit => ex
-          result = ex
-        end
-        result
-      end
+  describe 'failing to solve a puzzle' do
+    Given(:puzzle) {
+      "53..7...." +
+      "6..195..." +
+      ".98....6." +
+      "8...6...3" +
+      "4..8.3..1" +
+      "7...2...6" +
+      ".6....28." +
+      "...419..5" +
+      "7...8..79"
     }
+    Then { result.should =~ /no +solution +found/i }
+  end
+
+  describe 'complain if no file given' do
+    Given(:args) { [] }
     Then { result.should =~ /Usage:/ }
   end
 
   describe "argument handling" do
     Given(:args) { [ '--' ] }
-    When { solver.run(args) }
+    When(:result) { redirect_output { solver.run(args) } }
 
     Then { solver.verbose.should be_false }
     Then { solver.statistics.should be_false }
@@ -336,29 +366,29 @@ describe "Sudoku Solver" do
       Then { solver.verbose.should be_true }
     end
 
-    context "with statistics" do
-      Given(:args) { ['-s'] }
-      Then { solver.statistics.should be_true }
-    end
-
     context "with strategies" do
-      Given(:args) { ['-Sc'] }
+      Given(:args) { ['-sc'] }
       Then { solver.strategy_classes.should == [CellStrategy] }
     end
 
     context "with strategies" do
-      Given(:args) { ['-Sg'] }
+      Given(:args) { ['-sg'] }
       Then { solver.strategy_classes.should == [GroupStrategy] }
     end
 
     context "with strategies" do
-      Given(:args) { ['-Sb'] }
+      Given(:args) { ['-sb'] }
       Then { solver.strategy_classes.should == [BacktrackingStrategy] }
     end
 
     context "with strategies" do
-      Given(:args) { ['-Sgb'] }
+      Given(:args) { ['-sgb'] }
       Then { solver.strategy_classes.should == [GroupStrategy, BacktrackingStrategy] }
+    end
+
+    context "with bad option" do
+      Given(:args) { ['-x'] }
+      Then { result.should have_failed(SystemExit) }
     end
 
   end
