@@ -438,7 +438,6 @@ class SudokuSolver
 
   def initialize
     @verbose = false
-    @statistics = false
     @strategy_chars = 'cgb'
   end
 
@@ -452,12 +451,17 @@ class SudokuSolver
     board = new_board(string)
     puts board
     t = Time.now
-    board.solve
-    @solution_time = Time.now - t
-    @statistics = Hash[board.strategies.map { |s| [s.class, s.statistics] }]
-    puts
-    puts board
-    puts
+    begin
+      board.solve
+      @solution_time = Time.now - t
+      @statistics = Hash[board.strategies.map { |s| [s.class, s.statistics] }]
+      puts
+      puts board
+      puts
+      show_statistics if @verbose
+    rescue Board::SolutionError => ex
+      puts ex.message
+    end
   end
 
   def run(args)
@@ -465,26 +469,28 @@ class SudokuSolver
       puts "Usage: ruby sudoku.rb sud-files..."
       exit
     end
-    while args.first =~ /^-/
-      arg = args.shift
+    files = []
+    args.each do |arg|
       case arg
       when /^--$/
         # noop
       when /^-v$/
         @verbose = ! @verbose
-      when /^-s$/
-        @statistics = ! @statistics
-      when /^-S([cgb]*)$/
+      when /^-s([cgb]*)$/
         @strategy_chars = $1
+      when /^[^-]/
+        files << arg
+      else
+        puts "Unrecognized option '#{arg}'"
+        exit 1
       end
     end
 
-    args.each do |fn|
+    files.each do |fn|
       puts "Solving #{fn} ----------------------------------------------"
       puts
       open(fn) do |f|
         solve(f.read)
-        show_statistics
       end
     end
   end
