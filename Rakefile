@@ -7,8 +7,8 @@ CLOBBER.include("coverage")
 
 task :default => :specs
 
-task :specs do
-  sh "rspec sudoku_spec.rb"
+task :specs, [:flags] do |t, args|
+  sh "rspec sudoku_spec.rb #{args.flags}"
 end
 
 task :solve, [:puzzle] do |t, args|
