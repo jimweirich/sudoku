@@ -282,19 +282,21 @@ describe "Sudoku Solver" do
     end
   end
 
-  TMP_PUZZLE = 'tmp/puzzle.sud'
-
   after do
     FileUtils.rm_r 'tmp' rescue nil
   end
 
-  Given(:puzzle_file) {
+  def create_temp_puzzle(encoding)
+    file_name = 'tmp/puzzle.sud'
     FileUtils.mkdir("tmp") rescue nil
-    open(TMP_PUZZLE, "w") { |f| f.puts(puzzle) }
-    TMP_PUZZLE
-  }
-  Given(:output_string) { StringIO.new }
-  Given(:output) { output_string.string }
+    open(file_name, "w") { |f| f.puts(encoding) }
+    file_name
+  end
+
+  let(:output_string) { StringIO.new }
+  let(:output) { output_string.string }
+
+  Given(:puzzle_file) { create_temp_puzzle(puzzle) }
   Given(:args) { [puzzle_file, '-v'] }
 
   Given(:solver) { SudokuSolver.new }
